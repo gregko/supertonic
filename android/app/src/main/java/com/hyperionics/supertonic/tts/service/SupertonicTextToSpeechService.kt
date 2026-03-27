@@ -116,6 +116,7 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
         }
 
         return if (resolveStyleFile(language.appCode, voiceFile).exists()) {
+            saveExternalVoiceSelection(language.appCode, voiceFile)
             TextToSpeech.SUCCESS
         } else {
             TextToSpeech.ERROR
@@ -131,10 +132,8 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
     }
 
     override fun onGetDefaultVoiceNameFor(lang: String?, country: String?, variant: String?): String {
-        val prefs = getSharedPreferences("SupertonicPrefs", android.content.Context.MODE_PRIVATE)
-        val selected = prefs.getString("selected_voice", "M1.json") ?: "M1.json"
-
         val language = findSupportedLanguage(lang) ?: findSupportedLanguage(getSelectedLang()) ?: SUPPORTED_LANGS.first()
+        val selected = getEffectiveVoiceFile(language.appCode)
         val profile = findVoiceProfileByFileName(selected) ?: VOICE_PROFILES.first()
         return buildVoiceName(language, profile)
     }
@@ -218,7 +217,10 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
         }
 
         val prefs = getSharedPreferences("SupertonicPrefs", android.content.Context.MODE_PRIVATE)
-        val voiceFile = parsedVoice?.second ?: (prefs.getString("selected_voice", "M1.json") ?: "M1.json")
+        val voiceFile = parsedVoice?.second ?: getEffectiveVoiceFile(requestLang)
+        if (parsedVoice != null) {
+            saveExternalVoiceSelection(requestLang, voiceFile)
+        }
 
         val stylePath = resolveStyleFile(requestLang, voiceFile).absolutePath
         val steps = prefs.getInt("diffusion_steps", 5)
@@ -245,6 +247,27 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
     private fun getSelectedLang(): String {
         val prefs = getSharedPreferences("SupertonicPrefs", android.content.Context.MODE_PRIVATE)
         return prefs.getString("selected_lang", "en") ?: "en"
+    }
+
+    private fun getExternalVoicePreferenceKey(lang: String): String {
+        return "tts_external_voice_${lang.lowercase(Locale.ROOT)}"
+    }
+
+    private fun getEffectiveVoiceFile(lang: String): String {
+        val prefs = getSharedPreferences("SupertonicPrefs", android.content.Context.MODE_PRIVATE)
+        val externalVoice = prefs.getString(getExternalVoicePreferenceKey(lang), null)
+        if (!externalVoice.isNullOrBlank()) {
+            return externalVoice
+        }
+
+        return prefs.getString("selected_voice", "M1.json") ?: "M1.json"
+    }
+
+    private fun saveExternalVoiceSelection(lang: String, voiceFile: String) {
+        getSharedPreferences("SupertonicPrefs", android.content.Context.MODE_PRIVATE)
+            .edit()
+            .putString(getExternalVoicePreferenceKey(lang), voiceFile)
+            .apply()
     }
 
     private fun findSupportedLanguage(lang: String?): SupportedLanguage? {
