@@ -9,6 +9,10 @@ plugins {
 def configuredNdkVersion = "27.2.12479018"
 def configuredMinSdk = 24
 def defaultAbiFilters = ["arm64-v8a", "x86_64"]
+def appVersionCode = 10200 // major * 10000 + minor * 100 + patch
+def appVersionName = "1.2.0"
+def githubRepoUrl = (project.findProperty("supertonicGithubRepoUrl") ?: "https://github.com/gregko/supertonic") as String
+def githubBranch = (project.findProperty("supertonicGithubBranch") ?: "codex/android-fork") as String
 def configuredAbiFilters = ((project.findProperty("supertonicAbiFilters") ?: defaultAbiFilters.join(',')) as String)
     .split(',')
     .collect { it.trim() }
@@ -43,8 +47,11 @@ android {
         applicationId "com.brahmadeo.supertonic.tts"
         minSdk configuredMinSdk
         targetSdk 36
-        versionCode 2
-        versionName "1.1"
+        versionCode appVersionCode
+        versionName appVersionName
+        buildConfigField "String", "GITHUB_REPO_URL", "\"${githubRepoUrl}\""
+        buildConfigField "String", "GITHUB_BRANCH", "\"${githubBranch}\""
+        buildConfigField "String", "GITHUB_BRANCH_URL", "\"${githubRepoUrl}/tree/${githubBranch}\""
         
         ndk {
             abiFilters(*configuredAbiFilters)
@@ -66,6 +73,8 @@ android {
     }
     buildFeatures {
         compose true
+        aidl true
+        buildConfig true
     }
     packagingOptions {
         jniLibs {
@@ -76,9 +85,6 @@ android {
         main {
             assets.srcDir generatedAssetsDir
         }
-    }
-    buildFeatures {
-        aidl true
     }
 }
 

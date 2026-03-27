@@ -59,7 +59,7 @@ fun MainScreen(
     onSavedAudioClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onQueueClick: () -> Unit,
-    onLicensesClick: () -> Unit,
+    onAboutClick: () -> Unit,
     onLexiconClick: () -> Unit,
 
     // Mini Player
@@ -91,12 +91,13 @@ fun MainScreen(
                         DropdownMenuItem(text = { Text("Saved Audio") }, onClick = { showMenu = false; onSavedAudioClick() })
                         DropdownMenuItem(text = { Text("History") }, onClick = { showMenu = false; onHistoryClick() })
                         DropdownMenuItem(text = { Text("Queue") }, onClick = { showMenu = false; onQueueClick() })
-                        DropdownMenuItem(text = { Text("Licenses") }, onClick = { showMenu = false; onLicensesClick() })
                         DropdownMenuItem(
                             text = { Text("Lexicon") },
                             onClick = { showMenu = false; onLexiconClick() },
                             enabled = currentLangCode == "en"
                         )
+                        HorizontalDivider()
+                        DropdownMenuItem(text = { Text("About") }, onClick = { showMenu = false; onAboutClick() })
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat
 import com.brahmadeo.supertonic.tts.service.IPlaybackListener
 import com.brahmadeo.supertonic.tts.service.IPlaybackService
 import com.brahmadeo.supertonic.tts.service.PlaybackService
+import com.brahmadeo.supertonic.tts.ui.AboutDialog
 import com.brahmadeo.supertonic.tts.ui.MainScreen
 import com.brahmadeo.supertonic.tts.ui.theme.SupertonicTheme
 import com.brahmadeo.supertonic.tts.utils.AssetInstaller
@@ -75,6 +76,7 @@ class MainActivity : ComponentActivity() {
     // Dialog State
     private var showQueueDialog = mutableStateOf(false)
     private var queueDialogText = ""
+    private var showAboutDialog = mutableStateOf(false)
 
     private val playbackListener = object : IPlaybackListener.Stub() {
         override fun onStateChanged(isPlaying: Boolean, hasContent: Boolean, isSynthesizing: Boolean) {
@@ -211,6 +213,18 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                if (showAboutDialog.value) {
+                    AboutDialog(
+                        appName = getString(R.string.app_name),
+                        versionName = BuildConfig.VERSION_NAME,
+                        repoUrl = BuildConfig.GITHUB_REPO_URL,
+                        branchName = BuildConfig.GITHUB_BRANCH,
+                        branchUrl = BuildConfig.GITHUB_BRANCH_URL,
+                        onDismiss = { showAboutDialog.value = false },
+                        onOpenLicenses = { startActivity(Intent(this, LicensesActivity::class.java)) }
+                    )
+                }
+
                 // Get localized placeholder
                 val placeholder = getLocalizedResource(this, currentLangState.value, R.string.default_input_text)
 
@@ -271,7 +285,7 @@ class MainActivity : ComponentActivity() {
                     onSavedAudioClick = { startActivity(Intent(this, SavedAudioActivity::class.java)) },
                     onHistoryClick = { historyLauncher.launch(Intent(this, HistoryActivity::class.java)) },
                     onQueueClick = { startActivity(Intent(this, QueueActivity::class.java)) },
-                    onLicensesClick = { startActivity(Intent(this, LicensesActivity::class.java)) },
+                    onAboutClick = { showAboutDialog.value = true },
                     onLexiconClick = { startActivity(Intent(this, LexiconActivity::class.java)) },
 
                     showMiniPlayer = showMiniPlayerState.value,
