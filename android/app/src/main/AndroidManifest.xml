@@ -8,7 +8,6 @@
 
     <application
         android:allowBackup="true"
-        android:extractNativeLibs="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -54,6 +53,10 @@
         <activity android:name=".LexiconActivity"
             android:parentActivityName=".MainActivity"
             android:label="Pronunciation Dictionary" />
+
+        <activity android:name=".LicensesActivity"
+            android:parentActivityName=".MainActivity"
+            android:label="@string/licenses_title" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

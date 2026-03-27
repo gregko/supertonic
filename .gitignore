@@ -78,6 +78,7 @@ server.log
 # Temporary / Backup files
 *.bak
 *.backup*
+tmp/
 py/test.py
 py/clean.py
 py/cleaned_article.txt

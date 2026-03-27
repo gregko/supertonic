@@ -8,7 +8,7 @@ use serde_json;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
-use anyhow::{Result, Context, bail};
+use anyhow::{Context, Result};
 use unicode_normalization::UnicodeNormalization;
 use hound::{WavWriter, WavSpec, SampleFormat};
 use rand_distr::{Distribution, Normal};
@@ -16,6 +16,7 @@ use regex::Regex;
 
 // Available languages for multilingual TTS
 pub const AVAILABLE_LANGS: &[&str] = &["en", "ko", "es", "pt", "fr"];
+const LATENT_TEMPERATURE: f32 = 0.60;
 
 pub fn is_valid_lang(lang: &str) -> bool {
     AVAILABLE_LANGS.contains(&lang)
@@ -209,10 +210,9 @@ pub fn preprocess_text(text: &str, lang: &str) -> Result<String> {
     //    bail!("Invalid language: {}. Available: {:?}", lang, AVAILABLE_LANGS);
     // }
 
-    // Wrap text with language tags - V2 needs tags, V1 (English) does not
-    if lang != "en" {
-        text = format!("<{}>{}</{}>", lang, text, lang);
-    }
+    // Supertonic 2 is multilingual for every supported language, including English.
+    // Always provide an explicit language tag so the model selects the correct path.
+    text = format!("<{}>{}</{}>", lang, text, lang);
 
     Ok(text)
 }
@@ -262,8 +262,9 @@ pub fn sample_noisy_latent(
 
     let mut noisy_latent = Array3::<f32>::zeros((bsz, latent_dim_val, latent_len));
 
-    // Reduced temperature (0.667) improves stability and reduces word skipping/hallucinations
-    let normal = Normal::new(0.0, 0.667).unwrap();
+    // Lower temperature improves stability and reduces skipped words/hallucinations.
+    // Keep this conservative to avoid making speech too flat or muffled.
+    let normal = Normal::new(0.0, LATENT_TEMPERATURE).unwrap();
     let mut rng = rand::thread_rng();
 
     for b in 0..bsz {
@@ -540,10 +541,7 @@ pub fn sanitize_filename(text: &str, max_len: usize) -> String {
 // ONNX Runtime Integration
 // ============================================================================ 
 
-use ort::{
-    session::Session,
-    value::Value,
-};
+use ort::{Session, SessionInputValue, Value};
 
 pub struct Style {
     pub ttl: Array3<f32>,
@@ -608,14 +606,14 @@ impl TextToSpeech {
         let style_dp_value = Value::from_array(style.dp.clone())?;
 
         // Predict duration
-        let dp_outputs = self.dp_ort.run(ort::inputs!{
-            "text_ids" => &text_ids_value,
-            "style_dp" => &style_dp_value,
-            "text_mask" => &text_mask_value
-        })?;
+        let dp_outputs = self.dp_ort.run(vec![
+            ("text_ids", SessionInputValue::from(text_ids_value.view())),
+            ("style_dp", SessionInputValue::from(style_dp_value.view())),
+            ("text_mask", SessionInputValue::from(text_mask_value.view())),
+        ])?;
 
-        let (_, duration_data) = dp_outputs["duration"].try_extract_tensor::<f32>()?;
-        let mut duration: Vec<f32> = duration_data.to_vec();
+        let duration_view = dp_outputs["duration"].try_extract_tensor::<f32>()?;
+        let mut duration: Vec<f32> = duration_view.iter().copied().collect();
         
         // Apply speed factor to duration
         for dur in duration.iter_mut() {
@@ -624,16 +622,17 @@ impl TextToSpeech {
 
         // Encode text
         let style_ttl_value = Value::from_array(style.ttl.clone())?;
-        let text_enc_outputs = self.text_enc_ort.run(ort::inputs!{
-            "text_ids" => &text_ids_value,
-            "style_ttl" => &style_ttl_value,
-            "text_mask" => &text_mask_value
-        })?;
+        let text_enc_outputs = self.text_enc_ort.run(vec![
+            ("text_ids", SessionInputValue::from(text_ids_value.view())),
+            ("style_ttl", SessionInputValue::from(style_ttl_value.view())),
+            ("text_mask", SessionInputValue::from(text_mask_value.view())),
+        ])?;
 
-        let (text_emb_shape, text_emb_data) = text_enc_outputs["text_emb"].try_extract_tensor::<f32>()?;
+        let text_emb_view = text_enc_outputs["text_emb"].try_extract_tensor::<f32>()?;
+        let text_emb_shape = text_emb_view.shape();
         let text_emb = Array3::from_shape_vec(
-            (text_emb_shape[0] as usize, text_emb_shape[1] as usize, text_emb_shape[2] as usize),
-            text_emb_data.to_vec()
+            (text_emb_shape[0], text_emb_shape[1], text_emb_shape[2]),
+            text_emb_view.iter().copied().collect()
         )?;
 
         // Sample noisy latent
@@ -659,31 +658,32 @@ impl TextToSpeech {
             let current_step_value = Value::from_array(current_step_array)?;
             let total_step_value = Value::from_array(total_step_array.clone())?;
 
-            let vector_est_outputs = self.vector_est_ort.run(ort::inputs!{
-                "noisy_latent" => &xt_value,
-                "text_emb" => &text_emb_value,
-                "style_ttl" => &style_ttl_value,
-                "latent_mask" => &latent_mask_value,
-                "text_mask" => &text_mask_value2,
-                "current_step" => &current_step_value,
-                "total_step" => &total_step_value
-            })?;
+            let vector_est_outputs = self.vector_est_ort.run(vec![
+                ("noisy_latent", SessionInputValue::from(xt_value.view())),
+                ("text_emb", SessionInputValue::from(text_emb_value.view())),
+                ("style_ttl", SessionInputValue::from(style_ttl_value.view())),
+                ("latent_mask", SessionInputValue::from(latent_mask_value.view())),
+                ("text_mask", SessionInputValue::from(text_mask_value2.view())),
+                ("current_step", SessionInputValue::from(current_step_value.view())),
+                ("total_step", SessionInputValue::from(total_step_value.view())),
+            ])?;
 
-            let (denoised_shape, denoised_data) = vector_est_outputs["denoised_latent"].try_extract_tensor::<f32>()?;
+            let denoised_view = vector_est_outputs["denoised_latent"].try_extract_tensor::<f32>()?;
+            let denoised_shape = denoised_view.shape();
             xt = Array3::from_shape_vec(
-                (denoised_shape[0] as usize, denoised_shape[1] as usize, denoised_shape[2] as usize),
-                denoised_data.to_vec()
+                (denoised_shape[0], denoised_shape[1], denoised_shape[2]),
+                denoised_view.iter().copied().collect()
             )?;
         }
 
         // Generate waveform
         let final_latent_value = Value::from_array(xt)?;
-        let vocoder_outputs = self.vocoder_ort.run(ort::inputs!{
-            "latent" => &final_latent_value
-        })?;
+        let vocoder_outputs = self.vocoder_ort.run(vec![
+            ("latent", SessionInputValue::from(final_latent_value.view())),
+        ])?;
 
-        let (_, wav_data) = vocoder_outputs["wav_tts"].try_extract_tensor::<f32>()?;
-        let wav: Vec<f32> = wav_data.to_vec();
+        let wav_view = vocoder_outputs["wav_tts"].try_extract_tensor::<f32>()?;
+        let wav: Vec<f32> = wav_view.iter().copied().collect();
 
         Ok((wav, duration))
     }
@@ -879,4 +879,21 @@ pub fn load_text_to_speech(onnx_dir: &str, use_gpu: bool) -> Result<TextToSpeech
         vector_est_ort,
         vocoder_ort,
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::preprocess_text;
+
+    #[test]
+    fn preprocess_text_wraps_english_with_language_tag() {
+        let processed = preprocess_text("Hello world", "en").unwrap();
+        assert_eq!(processed, "<en>Hello world.</en>");
+    }
+
+    #[test]
+    fn preprocess_text_wraps_spanish_with_language_tag() {
+        let processed = preprocess_text("Hola mundo", "es").unwrap();
+        assert_eq!(processed, "<es>Hola mundo.</es>");
+    }
 }

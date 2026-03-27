@@ -59,6 +59,7 @@ fun MainScreen(
     onSavedAudioClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onQueueClick: () -> Unit,
+    onAboutClick: () -> Unit,
     onLexiconClick: () -> Unit,
 
     // Mini Player
@@ -95,6 +96,8 @@ fun MainScreen(
                             onClick = { showMenu = false; onLexiconClick() },
                             enabled = currentLangCode == "en"
                         )
+                        HorizontalDivider()
+                        DropdownMenuItem(text = { Text("About") }, onClick = { showMenu = false; onAboutClick() })
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

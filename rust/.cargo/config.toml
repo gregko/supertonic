@@ -1,3 +1,6 @@
 [target.aarch64-linux-android]
 linker = "clang"
-rustflags = ["-l", "log"]
+rustflags = ["-l", "log", "-Clink-arg=-Wl,-z,max-page-size=16384"]
+
+[target.x86_64-linux-android]
+rustflags = ["-l", "log", "-Clink-arg=-Wl,-z,max-page-size=16384"]
