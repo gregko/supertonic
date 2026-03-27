@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-03-27T11:35:08.9604115-04:00",
+  "repo": {
+    "branch": "main",
+    "commit": "04481a738579a840cdc4250dd439fe36525e4efc",
+    "dirty": true
+  },
+  "modelAssets": {
+    "source": "huggingface.co/Supertone/supertonic-2",
+    "layout": "assets/onnx + assets/voice_styles",
+    "modelVersion": "v2",
+    "files": [
+      {
+        "path": "assets/onnx/duration_predictor.onnx",
+        "size": 1521526,
+        "sha256": "6D556B3691165C364BE91DC0BD894656B5949F5ACD2750D8EC2F954010845011"
+      },
+      {
+        "path": "assets/onnx/text_encoder.onnx",
+        "size": 27431318,
+        "sha256": "DD5F535ED629F7DF86071043E15F541CE1B2AB7F1BDBCE4C7892B307BCA79FA3"
+      },
+      {
+        "path": "assets/onnx/tts.json",
+        "size": 9014,
+        "sha256": "4A33CDB42E3432048123B26C46BB6FA637948D54FD4AC3EB36996D94ED6A79E1"
+      },
+      {
+        "path": "assets/onnx/unicode_indexer.json",
+        "size": 262196,
+        "sha256": "B7662A73A0703F43B97C0F2E089F8E8325E26F5D841ACA393B5A54C509C92DF1"
+      },
+      {
+        "path": "assets/onnx/vector_estimator.onnx",
+        "size": 132471364,
+        "sha256": "105E9D66FD8756876B210A6B4AA03FC393B1EACA3A8DADCC8D9A3BC785C86A35"
+      },
+      {
+        "path": "assets/onnx/vocoder.onnx",
+        "size": 101405066,
+        "sha256": "19BD51F47A186069C752403518A40F7EA4C647455056D2511F7249691ECDDF7C"
+      },
+      {
+        "path": "assets/voice_styles/M1.json",
+        "size": 433585,
+        "sha256": "560A6B1DDAF7917F03A402E4906DBD6BEB2362AC44713FC3505C1B707E3AD43E"
+      },
+      {
+        "path": "assets/voice_styles/M2.json",
+        "size": 433360,
+        "sha256": "C316285F66F943BC99DE18559A7C8679F6BD61AFE0364EB13DEA6DB2C9855D2B"
+      },
+      {
+        "path": "assets/voice_styles/M3.json",
+        "size": 433080,
+        "sha256": "C62B13C2BF05AC52E0E95BB036FE39E1C05D3DE15E168A25310CFDBA065AFD51"
+      },
+      {
+        "path": "assets/voice_styles/M4.json",
+        "size": 433032,
+        "sha256": "DFCEFB9C8648B6D40E5E50480DE728B3F9B66552274E81C234B76CDF35D2C04F"
+      },
+      {
+        "path": "assets/voice_styles/M5.json",
+        "size": 432694,
+        "sha256": "7E6A23AA9F44EB6E719F8A4BAE7CE0CBD532A889ED8C6261E3F420CC4A7B95BF"
+      },
+      {
+        "path": "assets/voice_styles/F1.json",
+        "size": 433125,
+        "sha256": "D650875408EFF538F64279E021BC096107740504ED2E27BC07ED08492A763EA9"
+      },
+      {
+        "path": "assets/voice_styles/F2.json",
+        "size": 433368,
+        "sha256": "2EDEB808FF0744877DC927520A76E7393E6756679E1EF172F303DA0EF6DDF580"
+      },
+      {
+        "path": "assets/voice_styles/F3.json",
+        "size": 432962,
+        "sha256": "0FD3D3F041C6361B1392E286218287025BCAB346C1942603541CD9A6AAE1EC23"
+      },
+      {
+        "path": "assets/voice_styles/F4.json",
+        "size": 432717,
+        "sha256": "44F14DA16D792A30951A919B9A8EC35056E514E7410B6C2BA87EB7E00C85A18A"
+      },
+      {
+        "path": "assets/voice_styles/F5.json",
+        "size": 432784,
+        "sha256": "4B3F20E6DAF4B5AAA64DEFCF07BF16559CAB247F6F1FB8E0F467920971236924"
+      }
+    ]
+  },
+  "onnxRuntimeAndroid": {
+    "version": "1.20.0",
+    "source": "maven:com.microsoft.onnxruntime:onnxruntime-android",
+    "installRoot": "C:\\Users\\greg\\onnxruntime-android",
+    "files": [
+      {
+        "abi": "arm64-v8a",
+        "path": "jni/arm64-v8a/libonnxruntime.so",
+        "size": 17571160,
+        "sha256": "52329B7C8E5FCD5C1AA88B01093215FAAEF362E3F3D0E374CB8B10D1E4704677"
+      },
+      {
+        "abi": "x86_64",
+        "path": "jni/x86_64/libonnxruntime.so",
+        "size": 20290904,
+        "sha256": "047705AB42981A4884EEC435F60CC1A311E40414CD52FA2F252DA2B473756844"
+      }
+    ]
+  },
+  "rust": {
+    "ortCrateVersion": "=2.0.0-rc.7",
+    "vendorPath": "rust/vendor/ort-2.0.0-rc.7"
+  },
+  "androidBuild": {
+    "abis": [
+      "arm64-v8a",
+      "x86_64"
+    ],
+    "ndkVersion": "27.2.12479018",
+    "apkPath": "android/app/build/outputs/apk/debug/app-debug.apk"
+  }
+}
+

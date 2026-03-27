@@ -23,16 +23,14 @@ import androidx.core.app.ServiceCompat
 import com.brahmadeo.supertonic.tts.MainActivity
 import com.brahmadeo.supertonic.tts.R
 import com.brahmadeo.supertonic.tts.SupertonicTTS
-import com.brahmadeo.supertonic.tts.utils.LanguageDetector
-import com.brahmadeo.supertonic.tts.utils.TextNormalizer
 import com.brahmadeo.supertonic.tts.utils.WavUtils
+import com.brahmadeo.supertonic.tts.utils.AssetInstaller
 import com.brahmadeo.supertonic.tts.utils.QueueManager
 import com.brahmadeo.supertonic.tts.utils.QueueItem
+import com.brahmadeo.supertonic.tts.utils.TextNormalizer
 import kotlinx.coroutines.*
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -92,6 +90,8 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
     
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
     private var wakeLock: android.os.PowerManager.WakeLock? = null
+    private var initJob: Deferred<Boolean>? = null
+    private var requestedModelVersion: String? = null
     
     private lateinit var audioManager: AudioManager
     private var focusRequest: AudioFocusRequest? = null
@@ -147,25 +147,68 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
             isActive = true
         }
 
-        val savedLang = getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE).getString("selected_lang", "en") ?: "en"
-        val modelVersion = if (savedLang == "en") "v1" else "v2"
-        val modelPath = File(filesDir, "$modelVersion/onnx").absolutePath
-        val libPath = applicationInfo.nativeLibraryDir + "/libonnxruntime.so"
-        SupertonicTTS.initialize(modelPath, libPath)
+        val savedLang = getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE)
+            .getString("selected_lang", "en") ?: "en"
+        startEngineInitialization(savedLang)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == "STOP_PLAYBACK") {
             stopPlayback()
         } else if (intent?.action == "RESET_ENGINE") {
-            SupertonicTTS.release()
-            val savedLang = getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE).getString("selected_lang", "en") ?: "en"
-            val modelVersion = if (savedLang == "en") "v1" else "v2"
-            val modelPath = File(filesDir, "$modelVersion/onnx").absolutePath
-            val libPath = applicationInfo.nativeLibraryDir + "/libonnxruntime.so"
-            SupertonicTTS.initialize(modelPath, libPath)
+            val savedLang = getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE)
+                .getString("selected_lang", "en") ?: "en"
+            startEngineInitialization(savedLang, forceReset = true)
         }
         return START_NOT_STICKY
+    }
+
+    private fun startEngineInitialization(lang: String, forceReset: Boolean = false) {
+        requestedModelVersion = AssetInstaller.preferredModelVersion(lang)
+        initJob?.cancel()
+        initJob = serviceScope.async(Dispatchers.IO) {
+            val preparedModel = AssetInstaller.prepareModel(this@PlaybackService, lang)
+            if (preparedModel == null) {
+                Log.e(TAG, "No compatible model assets available for language=$lang")
+                return@async false
+            }
+
+            if (forceReset) {
+                SupertonicTTS.release()
+            }
+
+            val initialized = SupertonicTTS.initialize(preparedModel.modelPath, preparedModel.libPath)
+            if (!initialized) {
+                Log.e(TAG, "Engine initialization failed for version=${preparedModel.version}")
+            }
+            initialized
+        }
+    }
+
+    private suspend fun ensureEngineReady(lang: String): Boolean {
+        val preferredVersion = AssetInstaller.preferredModelVersion(lang)
+        if (requestedModelVersion != preferredVersion) {
+            startEngineInitialization(lang)
+        }
+
+        initJob?.let {
+            val initialized = try {
+                it.await()
+            } catch (_: CancellationException) {
+                false
+            }
+
+            if (initialized && SupertonicTTS.getSoC() != -1) {
+                return true
+            }
+        }
+
+        startEngineInitialization(lang)
+        return try {
+            initJob?.await() == true
+        } catch (_: CancellationException) {
+            false
+        }
     }
 
     fun isServiceActive(): Boolean {
@@ -174,10 +217,11 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
     }
 
     fun addToQueue(text: String, lang: String, stylePath: String, speed: Float, steps: Int, startIndex: Int) {
+        val normalizedStylePath = AssetInstaller.normalizeStylePath(this, stylePath, lang)
         QueueManager.add(QueueItem(
             text = text,
             lang = lang,
-            stylePath = stylePath,
+            stylePath = normalizedStylePath,
             speed = speed,
             steps = steps,
             startIndex = startIndex
@@ -188,6 +232,13 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
 
     fun synthesizeAndPlay(text: String, lang: String, stylePath: String, speed: Float, steps: Int, startIndex: Int = 0) {
         serviceScope.launch {
+            if (!ensureEngineReady(lang)) {
+                Log.e(TAG, "Cannot synthesize because the model assets are unavailable for language=$lang")
+                return@launch
+            }
+
+            val normalizedStylePath = AssetInstaller.normalizeStylePath(this@PlaybackService, stylePath, lang)
+
             if (synthesisJob?.isActive == true) {
                 SupertonicTTS.setCancelled(true)
                 synthesisJob?.cancelAndJoin()
@@ -229,7 +280,7 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
                         val sentenceLang = lang // Strict enforcement as per requirement
                         val normalizedText = textNormalizer.normalize(sentence, sentenceLang)
 
-                        val audioData = SupertonicTTS.generateAudio(normalizedText, sentenceLang, stylePath, speed, 0.0f, steps, null)
+                        val audioData = SupertonicTTS.generateAudio(normalizedText, sentenceLang, normalizedStylePath, speed, 0.0f, steps, null)
                         
                         if (audioData != null && audioData.isNotEmpty()) {
                             val boostedData = applyVolumeBoost(audioData, VOLUME_BOOST_FACTOR)
@@ -423,6 +474,13 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
 
     fun exportAudio(text: String, lang: String, stylePath: String, speed: Float, steps: Int, outputFile: File) {
         serviceScope.launch {
+            if (!ensureEngineReady(lang)) {
+                try { listener?.onExportComplete(false, outputFile.absolutePath) } catch(e: RemoteException){}
+                return@launch
+            }
+
+            val normalizedStylePath = AssetInstaller.normalizeStylePath(this@PlaybackService, stylePath, lang)
+
             if (synthesisJob?.isActive == true) {
                 SupertonicTTS.setCancelled(true)
                 synthesisJob?.cancelAndJoin()
@@ -440,7 +498,7 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
                         // val sentenceLang = LanguageDetector.detect(sentence, lang)
                         val sentenceLang = lang
                         val normalizedText = textNormalizer.normalize(sentence, sentenceLang)
-                        val audioData = SupertonicTTS.generateAudio(normalizedText, sentenceLang, stylePath, speed, 0.0f, steps, null)
+                        val audioData = SupertonicTTS.generateAudio(normalizedText, sentenceLang, normalizedStylePath, speed, 0.0f, steps, null)
                         if (audioData != null) {
                             outputStream.write(applyVolumeBoost(audioData, VOLUME_BOOST_FACTOR))
                         }

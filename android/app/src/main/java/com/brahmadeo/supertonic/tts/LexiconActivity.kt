@@ -253,10 +253,11 @@ class LexiconActivity : ComponentActivity() {
 
         val prefs = getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE)
         val selectedLang = prefs.getString("selected_lang", "en") ?: "en"
-        val version = if (selectedLang == "en") "v1" else "v2"
         val voiceFile = prefs.getString("selected_voice", "M1.json") ?: "M1.json"
-        
-        val stylePath = File(filesDir, "$version/voice_styles/$voiceFile").absolutePath
+
+        val stylePath = com.brahmadeo.supertonic.tts.utils.AssetInstaller
+            .resolveStyleFile(this, voiceFile, selectedLang)
+            .absolutePath
         
         // Use higher steps (10) for test to ensure short words are audible and clear
         val testSteps = 10

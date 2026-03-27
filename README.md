@@ -86,6 +86,8 @@ The Android application included in this repository (`android/`) has been update
 -   **📜 History**: Automatically saves synthesized texts for quick access and restoration.
 -   **🌐 Chrome Integration**: Send text directly from your mobile browser to the app via the "Share" menu or the custom Chrome Extension.
 
+For this Windows/Android fork, the maintained update and validation workflow is documented in [ANDROID_UPDATE_WORKFLOW.md](/C:/GitHub/supertonic/ANDROID_UPDATE_WORKFLOW.md).
+
 ## Getting Started
 
 First, clone the repository:
