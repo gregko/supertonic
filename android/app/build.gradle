@@ -9,8 +9,8 @@ plugins {
 def configuredNdkVersion = "27.2.12479018"
 def configuredMinSdk = 24
 def defaultAbiFilters = ["arm64-v8a", "x86_64"]
-def appVersionCode = 10201 // major * 10000 + minor * 100 + patch
-def appVersionName = "1.2.1"
+def appVersionCode = 10202 // major * 10000 + minor * 100 + patch
+def appVersionName = "1.2.2"
 def githubRepoUrl = (project.findProperty("supertonicGithubRepoUrl") ?: "https://github.com/gregko/supertonic") as String
 def upstreamRepoUrl = (project.findProperty("supertonicUpstreamRepoUrl") ?: "https://github.com/DevGitPit/supertonic") as String
 def upstreamRepoLabel = (project.findProperty("supertonicUpstreamRepoLabel") ?: "DevGitPit/supertonic") as String
@@ -40,12 +40,12 @@ if (configuredAbiFilters.isEmpty()) {
 }
 
 android {
-    namespace 'com.brahmadeo.supertonic.tts'
+    namespace 'com.hyperionics.supertonic.tts'
     compileSdk 36
     ndkVersion configuredNdkVersion
 
     defaultConfig {
-        applicationId "com.brahmadeo.supertonic.tts"
+        applicationId "com.hyperionics.supertonic.tts"
         minSdk configuredMinSdk
         targetSdk 36
         versionCode appVersionCode

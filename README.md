@@ -11,6 +11,8 @@
 
 **Supertonic** is a lightning-fast, on-device text-to-speech system designed for **extreme performance** with minimal computational overhead. Powered by ONNX Runtime, it runs entirely on your device—no cloud, no API calls, no privacy concerns.
 
+> **Fork notice:** This repository is the Android-focused fork maintained at `gregko/supertonic`, based on [DevGitPit/supertonic](https://github.com/DevGitPit/supertonic). It adds end-to-end Android builds, bundled `Supertonic 2` assets, a system TTS engine, dual-ABI (`arm64-v8a` + `x86_64`) packaging, 16 KB native alignment validation, and release packaging suited for both phones and WSA.
+
 ## Fork Note
 
 This fork's `main` branch is the maintained Android-focused version of `gregko/supertonic`. It is based on [DevGitPit/supertonic](https://github.com/DevGitPit/supertonic), which in turn tracks the broader Supertonic project.
