@@ -11,20 +11,20 @@
 
 **Supertonic** is a lightning-fast, on-device text-to-speech system designed for **extreme performance** with minimal computational overhead. Powered by ONNX Runtime, it runs entirely on your device—no cloud, no API calls, no privacy concerns.
 
-## Branch Note
+## Fork Note
 
-This branch, `codex/android-fork`, is the Android-focused branch of the `gregko/supertonic` fork. It is intentionally different from `main`.
+This fork's `main` branch is the maintained Android-focused version of `gregko/supertonic`. It is based on [DevGitPit/supertonic](https://github.com/DevGitPit/supertonic), which in turn tracks the broader Supertonic project.
 
-Compared with `main`, this branch adds and maintains:
+Compared with `DevGitPit/supertonic`, this fork adds and maintains:
 
 - Android Studio and Gradle builds that also build the Rust JNI libraries automatically
 - dual-ABI Android packaging for `arm64-v8a` and `x86_64`, including WSA-friendly builds
 - bundled `Supertonic 2` model assets with Android-side install/repair logic
 - system TTS engine fixes for multilingual voices, friendlier external voice names, and external-app voice selection
 - 16 KB native library alignment checks and APK validation
-- a documented, low-risk Android update workflow in [ANDROID_UPDATE_WORKFLOW.md](/C:/GitHub/supertonic/ANDROID_UPDATE_WORKFLOW.md)
+- a documented, low-risk Android update workflow in [ANDROID_UPDATE_WORKFLOW.md](ANDROID_UPDATE_WORKFLOW.md)
 
-If you want the generic upstream-style multi-platform repository state, use `main`. If you want the maintained Android app and Android TTS engine work, use this branch.
+If you want the maintained Android app and Android TTS engine work, use this fork's `main` branch. If you want the less customized upstream repository state, use [DevGitPit/supertonic](https://github.com/DevGitPit/supertonic) or the original upstream project.
 
 ### 📰 Update News
 
@@ -101,7 +101,7 @@ The Android application included in this repository (`android/`) has been update
 -   **📜 History**: Automatically saves synthesized texts for quick access and restoration.
 -   **🌐 Chrome Integration**: Send text directly from your mobile browser to the app via the "Share" menu or the custom Chrome Extension.
 
-For this Windows/Android fork, the maintained update and validation workflow is documented in [ANDROID_UPDATE_WORKFLOW.md](/C:/GitHub/supertonic/ANDROID_UPDATE_WORKFLOW.md).
+For this Windows/Android fork, the maintained update and validation workflow is documented in [ANDROID_UPDATE_WORKFLOW.md](ANDROID_UPDATE_WORKFLOW.md).
 
 ## Getting Started
 

@@ -218,8 +218,8 @@ class MainActivity : ComponentActivity() {
                         appName = getString(R.string.app_name),
                         versionName = BuildConfig.VERSION_NAME,
                         repoUrl = BuildConfig.GITHUB_REPO_URL,
-                        branchName = BuildConfig.GITHUB_BRANCH,
-                        branchUrl = BuildConfig.GITHUB_BRANCH_URL,
+                        upstreamRepoLabel = BuildConfig.UPSTREAM_REPO_LABEL,
+                        upstreamRepoUrl = BuildConfig.UPSTREAM_REPO_URL,
                         onDismiss = { showAboutDialog.value = false },
                         onOpenLicenses = { startActivity(Intent(this, LicensesActivity::class.java)) }
                     )

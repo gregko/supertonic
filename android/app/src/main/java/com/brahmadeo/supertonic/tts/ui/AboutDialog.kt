@@ -21,8 +21,8 @@ fun AboutDialog(
     appName: String,
     versionName: String,
     repoUrl: String,
-    branchName: String,
-    branchUrl: String,
+    upstreamRepoLabel: String,
+    upstreamRepoUrl: String,
     onDismiss: () -> Unit,
     onOpenLicenses: () -> Unit
 ) {
@@ -60,18 +60,19 @@ fun AboutDialog(
                     ) {
                         Text(repoUrl)
                     }
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = stringResource(R.string.about_branch_label),
-                        style = MaterialTheme.typography.labelLarge
+                        text = stringResource(R.string.about_forked_from_label),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     TextButton(
-                        onClick = { uriHandler.openUri(branchUrl) },
+                        onClick = { uriHandler.openUri(upstreamRepoUrl) },
                         modifier = Modifier.padding(horizontal = 0.dp)
                     ) {
-                        Text(branchName)
+                        Text(
+                            text = upstreamRepoLabel,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }

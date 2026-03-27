@@ -47,7 +47,7 @@
     <string name="about_title">About</string>
     <string name="about_version_fmt">Version %1$s</string>
     <string name="about_repo_label">GitHub Repository</string>
-    <string name="about_branch_label">GitHub Branch</string>
+    <string name="about_forked_from_label">Forked from</string>
     <string name="close">Close</string>
 
     <!-- Saved Audio Activity -->
