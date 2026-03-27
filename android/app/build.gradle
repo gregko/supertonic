@@ -20,6 +20,8 @@ def onnxJniRoot = (project.findProperty("supertonicOnnxJniRoot")
     ?: new File(System.getProperty("user.home"), "onnxruntime-android/jni").absolutePath) as String
 def generatedAssetsDir = layout.buildDirectory.dir("generated/supertonic/assets").get().asFile
 def assetSourceMappings = [
+    [source: new File(repoRootDir, "THIRD_PARTY_NOTICES.md"), into: "licenses"],
+    [source: new File(repoRootDir, "third_party_licenses"), into: "licenses/files"],
     [source: new File(repoRootDir, "assets/onnx"), into: "v2/onnx"],
     [source: new File(repoRootDir, "assets/voice_styles"), into: "v2/voice_styles"],
     [source: new File(repoRootDir, "assets/v2/onnx"), into: "v2/onnx"],

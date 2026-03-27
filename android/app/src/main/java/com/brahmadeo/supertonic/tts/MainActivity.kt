@@ -271,6 +271,7 @@ class MainActivity : ComponentActivity() {
                     onSavedAudioClick = { startActivity(Intent(this, SavedAudioActivity::class.java)) },
                     onHistoryClick = { historyLauncher.launch(Intent(this, HistoryActivity::class.java)) },
                     onQueueClick = { startActivity(Intent(this, QueueActivity::class.java)) },
+                    onLicensesClick = { startActivity(Intent(this, LicensesActivity::class.java)) },
                     onLexiconClick = { startActivity(Intent(this, LexiconActivity::class.java)) },
 
                     showMiniPlayer = showMiniPlayerState.value,

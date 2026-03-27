@@ -43,6 +43,7 @@
     <!-- History Activity -->
     <string name="history_title">History</string>
     <string name="clear_all_button">Clear All</string>
+    <string name="licenses_title">Licenses</string>
 
     <!-- Saved Audio Activity -->
     <string name="saved_audio_title">Saved Audio</string>
@@ -76,6 +77,7 @@
     <string name="action_saved">Saved Audio</string>
     <string name="action_history">History</string>
     <string name="action_queue">Queue</string>
+    <string name="action_licenses">Licenses</string>
     <string name="action_lexicon">Lexicon</string>
     <string name="action_import">Import JSON</string>
     <string name="action_export">Export JSON</string>

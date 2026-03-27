@@ -54,6 +54,10 @@
             android:parentActivityName=".MainActivity"
             android:label="Pronunciation Dictionary" />
 
+        <activity android:name=".LicensesActivity"
+            android:parentActivityName=".MainActivity"
+            android:label="@string/licenses_title" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
