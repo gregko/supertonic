@@ -48,4 +48,4 @@ This major update brings a complete UI overhaul and powerful new audio features.
 -   **Complex Sentence Handling**: Fixed an issue where the TTS engine would hang or loop when processing long text chunks containing semicolons (`;`) or em-dashes (`—`). The sentence splitter now correctly handles these punctuation marks.
 
 ## Technical Improvements
--   **Package Renaming**: Finalized the migration to `com.hyperionics.supertonic.tts` across all Android and Native (Rust) components.
+-   **Package Renaming**: Finalized the migration to `io.github.gregko.supertonic.tts` across all Android and Native (Rust) components.

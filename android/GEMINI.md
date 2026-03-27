@@ -26,10 +26,10 @@ The application serves two main purposes:
 ## Architecture
 
 ### Directory Structure
-*   `app/src/main/aidl/com/hyperionics/supertonic/tts/service/`: AIDL interface definitions.
+*   `app/src/main/aidl/io/github/gregko/supertonic/tts/service/`: AIDL interface definitions.
     *   `IPlaybackService.aidl`: Main control interface for synthesis and playback.
     *   `IPlaybackListener.aidl`: Callback interface for progress and state updates.
-*   `app/src/main/java/com/hyperionics/supertonic/tts/`: Kotlin source code.
+*   `app/src/main/java/io/github/gregko/supertonic/tts/`: Kotlin source code.
     *   `MainActivity.kt`: Main UI for input and configuration (Controls anchored to bottom).
     *   `PlaybackActivity.kt`: Immersive player with sentence highlighting.
     *   `HistoryActivity.kt`: View recent synthesis requests.

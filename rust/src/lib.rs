@@ -229,7 +229,7 @@ fn supertonic_tts_close(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_init(
+pub extern "system" fn Java_io_github_gregko_supertonic_tts_SupertonicTTS_init(
     env: JNIEnv,
     class: JClass,
     model_path: JString,
@@ -239,7 +239,7 @@ pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_init(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_synthesize(
+pub extern "system" fn Java_io_github_gregko_supertonic_tts_SupertonicTTS_synthesize(
     env: JNIEnv,
     instance: JObject,
     ptr: jlong,
@@ -254,7 +254,7 @@ pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_synthes
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_getSocClass(
+pub extern "system" fn Java_io_github_gregko_supertonic_tts_SupertonicTTS_getSocClass(
     env: JNIEnv,
     class: JClass,
     ptr: jlong,
@@ -263,7 +263,7 @@ pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_getSocC
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_getSampleRate(
+pub extern "system" fn Java_io_github_gregko_supertonic_tts_SupertonicTTS_getSampleRate(
     env: JNIEnv,
     class: JClass,
     ptr: jlong,
@@ -272,7 +272,7 @@ pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_getSamp
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_reset(
+pub extern "system" fn Java_io_github_gregko_supertonic_tts_SupertonicTTS_reset(
     env: JNIEnv,
     class: JClass,
     ptr: jlong,
@@ -281,7 +281,7 @@ pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_reset(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_close(
+pub extern "system" fn Java_io_github_gregko_supertonic_tts_SupertonicTTS_close(
     env: JNIEnv,
     class: JClass,
     ptr: jlong,
