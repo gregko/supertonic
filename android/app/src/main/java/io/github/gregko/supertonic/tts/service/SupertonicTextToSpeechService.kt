@@ -8,6 +8,7 @@ import android.speech.tts.Voice
 import android.util.Log
 import io.github.gregko.supertonic.tts.SupertonicTTS
 import io.github.gregko.supertonic.tts.utils.AssetInstaller
+import io.github.gregko.supertonic.tts.utils.SynthesisPreferences
 import kotlinx.coroutines.*
 import java.io.File
 import java.nio.ByteBuffer
@@ -224,6 +225,7 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
 
         val stylePath = resolveStyleFile(requestLang, voiceFile).absolutePath
         val steps = prefs.getInt("diffusion_steps", 5)
+        val temperature = SynthesisPreferences.getTemperature(prefs)
 
         try {
             val sentences = textNormalizer.splitIntoSentences(rawText)
@@ -236,7 +238,7 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
                 val sentenceLang = requestLang
                 val normalizedText = textNormalizer.normalize(sentence, sentenceLang)
 
-                SupertonicTTS.generateAudio(normalizedText, sentenceLang, stylePath, effectiveSpeed, 0.0f, steps, localListener)
+                SupertonicTTS.generateAudio(normalizedText, sentenceLang, stylePath, effectiveSpeed, 0.0f, steps, temperature, localListener)
             }
             if (success) callback.done() else callback.error()
         } finally {

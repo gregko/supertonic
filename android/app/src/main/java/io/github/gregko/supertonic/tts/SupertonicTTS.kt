@@ -1,6 +1,7 @@
 package io.github.gregko.supertonic.tts
 
 import android.util.Log
+import io.github.gregko.supertonic.tts.utils.SynthesisPreferences
 
 object SupertonicTTS {
     private var nativePtr: Long = 0
@@ -20,7 +21,7 @@ object SupertonicTTS {
     }
 
     private external fun init(modelPath: String, libPath: String): Long
-    private external fun synthesize(ptr: Long, text: String, lang: String, stylePath: String, speed: Float, bufferSeconds: Float, steps: Int): ByteArray
+    private external fun synthesize(ptr: Long, text: String, lang: String, stylePath: String, speed: Float, temperature: Float, bufferSeconds: Float, steps: Int): ByteArray
     private external fun getSocClass(ptr: Long): Int
     private external fun getSampleRate(ptr: Long): Int
     private external fun close(ptr: Long)
@@ -120,7 +121,16 @@ object SupertonicTTS {
     }
 
     @Synchronized
-    fun generateAudio(text: String, lang: String, stylePath: String, speed: Float = 1.0f, bufferDuration: Float = 0.0f, steps: Int = 5, listener: ProgressListener? = null): ByteArray? {
+    fun generateAudio(
+        text: String,
+        lang: String,
+        stylePath: String,
+        speed: Float = 1.0f,
+        bufferDuration: Float = 0.0f,
+        steps: Int = 5,
+        temperature: Float = SynthesisPreferences.DEFAULT_TEMPERATURE,
+        listener: ProgressListener? = null
+    ): ByteArray? {
         if (nativePtr == 0L) {
             Log.e("SupertonicTTS", "Engine not initialized")
             return null
@@ -130,7 +140,16 @@ object SupertonicTTS {
         currentTaskListener = listener
         
         try {
-            val data = synthesize(nativePtr, text, lang, stylePath, speed, bufferDuration, steps)
+            val data = synthesize(
+                nativePtr,
+                text,
+                lang,
+                stylePath,
+                speed,
+                SynthesisPreferences.normalizeTemperature(temperature),
+                bufferDuration,
+                steps
+            )
             return if (data.isNotEmpty()) data else null
         } catch (e: Exception) {
             Log.e("SupertonicTTS", "Native synthesis exception: ${e.message}")

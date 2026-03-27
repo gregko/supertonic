@@ -33,4 +33,4 @@ If the browser automatically removes or disables the extension, it is likely a p
 Android aggressively kills background processes. To fix this:
 1.  **Battery Settings:** Go to **Android Settings > Apps > [Your Browser] > Battery** and set to **Unrestricted**.
 2.  **Do not "Force Stop" the browser.**
-3.  **Media Notification:** Ensure the media notification ("Supertonic TTS") is visible. If it disappears, the OS has killed the process. Press Play in the popup to restart.
+3.  **Media Notification:** Ensure the media notification ("Supertonic Local TTS") is visible. If it disappears, the OS has killed the process. Press Play in the popup to restart.

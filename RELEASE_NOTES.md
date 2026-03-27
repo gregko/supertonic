@@ -1,4 +1,4 @@
-# Supertonic TTS - Release Notes
+# Supertonic Local TTS - Release Notes
 
 ## Version 1.3: The "Expressive" Update 🎨 (Current)
 
@@ -22,7 +22,7 @@ This major update brings a complete UI overhaul and powerful new audio features.
 -   **Real-time Control**: Adjust the mixing ratio (e.g., 70% Voice A + 30% Voice B) directly from the main screen.
 
 ### 🌐 Chrome Extension Updates
--   **Context Menu**: Right-click any text on a webpage and select "Send to Supertonic TTS".
+-   **Context Menu**: Right-click any text on a webpage and select "Send to Supertonic Local TTS".
 -   **Auto-Scroll Fix**: The currently reading sentence now stays perfectly centered in the view.
 -   **Cleaner UI**: Buttons auto-hide during playback to reduce clutter.
 

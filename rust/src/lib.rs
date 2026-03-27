@@ -70,6 +70,7 @@ fn supertonic_tts_synthesize(
     lang: JString,
     style_path: JString,
     speed: jfloat,
+    temperature: jfloat,
     buffer_seconds: jfloat,
     steps: jint,
 ) -> jbyteArray {
@@ -112,7 +113,7 @@ fn supertonic_tts_synthesize(
     
     // Create a progress callback
     let mut last_progress_call = Instant::now();
-    let result = engine.tts.call(&text, &lang, &style, steps as usize, speed, 0.1, |curr, total, audio_chunk| {
+    let result = engine.tts.call(&text, &lang, &style, steps as usize, speed, temperature, 0.1, |curr, total, audio_chunk| {
         // Check for cancellation
         let is_cancelled = env.call_method(&instance, "isCancelled", "()Z", &[]).unwrap().z().unwrap();
         if is_cancelled {
@@ -247,10 +248,11 @@ pub extern "system" fn Java_io_github_gregko_supertonic_tts_SupertonicTTS_synthe
     lang: JString,
     style_path: JString,
     speed: jfloat,
+    temperature: jfloat,
     buffer_seconds: jfloat,
     steps: jint,
 ) -> jbyteArray {
-    supertonic_tts_synthesize(env, instance, ptr, text, lang, style_path, speed, buffer_seconds, steps)
+    supertonic_tts_synthesize(env, instance, ptr, text, lang, style_path, speed, temperature, buffer_seconds, steps)
 }
 
 #[no_mangle]

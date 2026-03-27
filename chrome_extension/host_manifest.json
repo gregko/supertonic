@@ -1,6 +1,6 @@
 {
   "name": "com.supertonic.tts",
-  "description": "Supertonic TTS Host",
+  "description": "Supertonic Local TTS Host",
   "path": "/data/data/com.termux/files/home/supertonic/cpp/build/start_host.sh",
   "type": "stdio",
   "allowed_origins": [

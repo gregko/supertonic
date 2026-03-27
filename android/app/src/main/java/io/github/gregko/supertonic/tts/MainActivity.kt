@@ -33,6 +33,7 @@ import io.github.gregko.supertonic.tts.utils.AssetInstaller
 import io.github.gregko.supertonic.tts.utils.HistoryManager
 import io.github.gregko.supertonic.tts.utils.LexiconManager
 import io.github.gregko.supertonic.tts.utils.QueueManager
+import io.github.gregko.supertonic.tts.utils.SynthesisPreferences
 import kotlinx.coroutines.*
 import java.io.File
 
@@ -51,6 +52,7 @@ class MainActivity : ComponentActivity() {
     private var mixAlphaState = mutableFloatStateOf(0.5f)
     private var currentSpeedState = mutableFloatStateOf(1.1f)
     private var currentStepsState = mutableIntStateOf(5)
+    private var currentTemperatureState = mutableFloatStateOf(SynthesisPreferences.DEFAULT_TEMPERATURE)
 
     // Mini Player State
     private var showMiniPlayerState = mutableStateOf(false)
@@ -271,6 +273,14 @@ class MainActivity : ComponentActivity() {
 
                     speed = currentSpeedState.value,
                     onSpeedChange = { currentSpeedState.value = it },
+                    temperature = currentTemperatureState.floatValue,
+                    onTemperatureChange = {
+                        val normalizedTemperature = SynthesisPreferences.normalizeTemperature(it)
+                        currentTemperatureState.floatValue = normalizedTemperature
+                        getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE).edit()
+                            .putFloat(SynthesisPreferences.KEY_TEMPERATURE, normalizedTemperature)
+                            .apply()
+                    },
                     steps = currentStepsState.value,
                     onStepsChange = {
                         currentStepsState.value = it
@@ -309,6 +319,7 @@ class MainActivity : ComponentActivity() {
                                 putExtra(PlaybackActivity.EXTRA_VOICE_PATH, stylePath)
                                 
                                 putExtra(PlaybackActivity.EXTRA_SPEED, currentSpeedState.value)
+                                putExtra(PlaybackActivity.EXTRA_TEMPERATURE, currentTemperatureState.floatValue)
                                 putExtra(PlaybackActivity.EXTRA_STEPS, currentStepsState.intValue)
                                 putExtra(PlaybackActivity.EXTRA_LANG, currentLangState.value)
                                 putExtra("is_resume", true)
@@ -348,6 +359,7 @@ class MainActivity : ComponentActivity() {
     private fun loadPreferences() {
         val prefs = getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE)
         currentStepsState.intValue = prefs.getInt("diffusion_steps", 5)
+        currentTemperatureState.floatValue = SynthesisPreferences.getTemperature(prefs)
         currentLangState.value = prefs.getString("selected_lang", "en") ?: "en"
         selectedVoiceFileState.value = prefs.getString("selected_voice", "M1.json") ?: "M1.json"
         selectedVoiceFile2State.value = prefs.getString("selected_voice_2", "M2.json") ?: "M2.json"
@@ -441,6 +453,7 @@ class MainActivity : ComponentActivity() {
                         putExtra(PlaybackActivity.EXTRA_TEXT, text)
                         putExtra(PlaybackActivity.EXTRA_VOICE_PATH, stylePath)
                         putExtra(PlaybackActivity.EXTRA_SPEED, currentSpeedState.value)
+                        putExtra(PlaybackActivity.EXTRA_TEMPERATURE, currentTemperatureState.floatValue)
                         putExtra(PlaybackActivity.EXTRA_STEPS, currentStepsState.intValue)
                         putExtra(PlaybackActivity.EXTRA_LANG, currentLangState.value)
                         putExtra("is_resume", true) // Hint to PlaybackActivity that we are resuming
@@ -468,6 +481,7 @@ class MainActivity : ComponentActivity() {
                 currentLangState.value,
                 stylePath,
                 currentSpeedState.value,
+                currentTemperatureState.floatValue,
                 currentStepsState.intValue,
                 0
             )
@@ -487,6 +501,7 @@ class MainActivity : ComponentActivity() {
             putExtra(PlaybackActivity.EXTRA_TEXT, text)
             putExtra(PlaybackActivity.EXTRA_VOICE_PATH, stylePath)
             putExtra(PlaybackActivity.EXTRA_SPEED, currentSpeedState.value)
+            putExtra(PlaybackActivity.EXTRA_TEMPERATURE, currentTemperatureState.floatValue)
             putExtra(PlaybackActivity.EXTRA_STEPS, currentStepsState.intValue)
             putExtra(PlaybackActivity.EXTRA_LANG, currentLangState.value)
         }

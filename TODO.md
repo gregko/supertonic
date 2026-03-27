@@ -1,4 +1,4 @@
-# Supertonic TTS - Implementation Roadmap
+# Supertonic Local TTS - Implementation Roadmap
 
 ## Version 1.1: Core Stability & UX - ✅ COMPLETED
 *Goal: Robust background playback, lifecycle recovery, and polished UI.*

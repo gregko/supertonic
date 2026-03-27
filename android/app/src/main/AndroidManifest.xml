@@ -74,7 +74,7 @@
 
         <service android:name=".service.SupertonicTextToSpeechService"
             android:exported="true"
-            android:label="Supertonic TTS"
+            android:label="@string/tts_engine_name"
             android:permission="android.permission.BIND_TEXT_TO_SPEECH_SERVICE">
             <intent-filter>
                 <action android:name="android.intent.action.TTS_SERVICE" />

@@ -17,9 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.gregko.supertonic.tts.R
+import io.github.gregko.supertonic.tts.utils.SynthesisPreferences
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +53,8 @@ fun MainScreen(
     // Speed & Quality
     speed: Float,
     onSpeedChange: (Float) -> Unit,
+    temperature: Float,
+    onTemperatureChange: (Float) -> Unit,
     steps: Int,
     onStepsChange: (Int) -> Unit,
 
@@ -78,7 +82,7 @@ fun MainScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Supertonic TTS") },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     IconButton(onClick = { showMenu = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "Menu")
@@ -278,6 +282,19 @@ fun MainScreen(
                                 value = speed,
                                 onValueChange = onSpeedChange,
                                 valueRange = 0.9f..1.5f,
+                                steps = 11
+                            )
+                        }
+
+                        Column {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Temperature", style = MaterialTheme.typography.labelMedium)
+                                Text(String.format("%.2f", temperature), style = MaterialTheme.typography.labelLarge)
+                            }
+                            Slider(
+                                value = temperature,
+                                onValueChange = { onTemperatureChange(SynthesisPreferences.normalizeTemperature(it)) },
+                                valueRange = SynthesisPreferences.MIN_TEMPERATURE..SynthesisPreferences.MAX_TEMPERATURE,
                                 steps = 11
                             )
                         }

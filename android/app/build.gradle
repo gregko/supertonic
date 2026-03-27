@@ -9,8 +9,8 @@ plugins {
 def configuredNdkVersion = "27.2.12479018"
 def configuredMinSdk = 24
 def defaultAbiFilters = ["arm64-v8a", "x86_64"]
-def appVersionCode = 10203 // major * 10000 + minor * 100 + patch
-def appVersionName = "1.2.3"
+def appVersionCode = 10204 // major * 10000 + minor * 100 + patch
+def appVersionName = "1.2.4"
 def githubRepoUrl = (project.findProperty("supertonicGithubRepoUrl") ?: "https://github.com/gregko/supertonic") as String
 def upstreamRepoUrl = (project.findProperty("supertonicUpstreamRepoUrl") ?: "https://github.com/DevGitPit/supertonic") as String
 def upstreamRepoLabel = (project.findProperty("supertonicUpstreamRepoLabel") ?: "DevGitPit/supertonic") as String
@@ -34,6 +34,26 @@ def assetSourceMappings = [
     [source: new File(repoRootDir, "assets/V2/supertonic-2/onnx"), into: "v2/onnx"],
     [source: new File(repoRootDir, "assets/V2/supertonic-2/voice_styles"), into: "v2/voice_styles"]
 ]
+def envOrProperty = { name ->
+    def value = project.findProperty(name) ?: System.getenv(name)
+    if (value == null) {
+        return null
+    }
+
+    def trimmed = value.toString().trim()
+    return trimmed.isEmpty() ? null : trimmed
+}
+def releaseKeystoreFile = envOrProperty("KEYSTORE_FILE")
+def releaseKeystorePassword = envOrProperty("KEYSTORE_PASSWORD")
+def releaseKeyAlias = envOrProperty("KEY_ALIAS")
+def releaseKeyPassword = envOrProperty("KEY_PASSWORD")
+def missingReleaseSigningVars = [
+    "KEYSTORE_FILE"    : releaseKeystoreFile,
+    "KEYSTORE_PASSWORD": releaseKeystorePassword,
+    "KEY_ALIAS"        : releaseKeyAlias,
+    "KEY_PASSWORD"     : releaseKeyPassword
+].findAll { !it.value }.keySet()
+def hasReleaseSigning = missingReleaseSigningVars.isEmpty()
 
 if (configuredAbiFilters.isEmpty()) {
     configuredAbiFilters = defaultAbiFilters
@@ -59,8 +79,27 @@ android {
         }
     }
 
-    buildTypes {
+    signingConfigs {
         release {
+            if (hasReleaseSigning) {
+                storeFile file(releaseKeystoreFile)
+                storePassword releaseKeystorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
+        }
+        release {
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -172,6 +211,22 @@ tasks.register("buildSupertonicNativeLibs", Exec) {
 tasks.named("preBuild").configure {
     dependsOn("syncSupertonicAssets")
     dependsOn("buildSupertonicNativeLibs")
+}
+
+["assembleRelease", "bundleRelease"].each { taskName ->
+    tasks.matching { it.name == taskName }.configureEach {
+        doFirst {
+            if (!hasReleaseSigning) {
+                throw new GradleException(
+                    "Release signing is not configured. Missing: ${missingReleaseSigningVars.join(', ')}"
+                )
+            }
+
+            if (!file(releaseKeystoreFile).exists()) {
+                throw new GradleException("KEYSTORE_FILE does not exist: ${releaseKeystoreFile}")
+            }
+        }
+    }
 }
 
 dependencies {

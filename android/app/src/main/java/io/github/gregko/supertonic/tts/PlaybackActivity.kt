@@ -17,6 +17,7 @@ import io.github.gregko.supertonic.tts.service.IPlaybackService
 import io.github.gregko.supertonic.tts.service.PlaybackService
 import io.github.gregko.supertonic.tts.ui.PlaybackScreen
 import io.github.gregko.supertonic.tts.ui.theme.SupertonicTheme
+import io.github.gregko.supertonic.tts.utils.SynthesisPreferences
 import io.github.gregko.supertonic.tts.utils.TextNormalizer
 import java.io.File
 import java.text.SimpleDateFormat
@@ -39,6 +40,7 @@ class PlaybackActivity : ComponentActivity() {
     private var currentText = ""
     private var currentVoicePath = ""
     private var currentSpeed = 1.0f
+    private var currentTemperature = SynthesisPreferences.DEFAULT_TEMPERATURE
     private var currentSteps = 5
     private var currentLang = "en"
 
@@ -46,6 +48,7 @@ class PlaybackActivity : ComponentActivity() {
         const val EXTRA_TEXT = "extra_text"
         const val EXTRA_VOICE_PATH = "extra_voice_path"
         const val EXTRA_SPEED = "extra_speed"
+        const val EXTRA_TEMPERATURE = "extra_temperature"
         const val EXTRA_STEPS = "extra_steps"
         const val EXTRA_LANG = "extra_lang"
     }
@@ -149,6 +152,12 @@ class PlaybackActivity : ComponentActivity() {
             currentText = newText
             currentVoicePath = intent.getStringExtra(EXTRA_VOICE_PATH) ?: ""
             currentSpeed = intent.getFloatExtra(EXTRA_SPEED, 1.0f)
+            currentTemperature = SynthesisPreferences.normalizeTemperature(
+                intent.getFloatExtra(
+                    EXTRA_TEMPERATURE,
+                    SynthesisPreferences.getTemperature(SynthesisPreferences.getPrefs(this))
+                )
+            )
             currentSteps = intent.getIntExtra(EXTRA_STEPS, 5)
             currentLang = intent.getStringExtra(EXTRA_LANG) ?: "en"
             setupList(currentText)
@@ -157,6 +166,12 @@ class PlaybackActivity : ComponentActivity() {
              currentText = prefs.getString("last_text", "") ?: ""
              currentVoicePath = prefs.getString("last_voice_path", "") ?: ""
              currentSpeed = prefs.getFloat("last_speed", 1.0f)
+             currentTemperature = SynthesisPreferences.normalizeTemperature(
+                 prefs.getFloat(
+                     SynthesisPreferences.KEY_LAST_TEMPERATURE,
+                     SynthesisPreferences.getTemperature(prefs)
+                 )
+             )
              currentSteps = prefs.getInt("last_steps", 5)
              currentLang = prefs.getString("last_lang", "en") ?: "en"
              currentIndexState.intValue = prefs.getInt("last_index", 0)
@@ -211,7 +226,7 @@ class PlaybackActivity : ComponentActivity() {
         if (currentText.isEmpty()) return
         saveState()
         try {
-            playbackService?.synthesizeAndPlay(currentText, currentLang, currentVoicePath, currentSpeed, currentSteps, 0)
+            playbackService?.synthesizeAndPlay(currentText, currentLang, currentVoicePath, currentSpeed, currentTemperature, currentSteps, 0)
         } catch (e: RemoteException) {
             e.printStackTrace()
         }
@@ -221,7 +236,7 @@ class PlaybackActivity : ComponentActivity() {
         if (currentText.isEmpty()) return
         saveState()
         try {
-            playbackService?.synthesizeAndPlay(currentText, currentLang, currentVoicePath, currentSpeed, currentSteps, index)
+            playbackService?.synthesizeAndPlay(currentText, currentLang, currentVoicePath, currentSpeed, currentTemperature, currentSteps, index)
         } catch (e: RemoteException) {
             e.printStackTrace()
         }
@@ -232,6 +247,7 @@ class PlaybackActivity : ComponentActivity() {
             .putString("last_text", currentText)
             .putString("last_voice_path", currentVoicePath)
             .putFloat("last_speed", currentSpeed)
+            .putFloat(SynthesisPreferences.KEY_LAST_TEMPERATURE, currentTemperature)
             .putInt("last_steps", currentSteps)
             .putString("last_lang", currentLang)
             .putBoolean("is_playing", true)
@@ -268,7 +284,7 @@ class PlaybackActivity : ComponentActivity() {
         val file = File(appDir, filename)
 
         try {
-            playbackService?.exportAudio(currentText, currentLang, currentVoicePath, currentSpeed, currentSteps, file.absolutePath)
+            playbackService?.exportAudio(currentText, currentLang, currentVoicePath, currentSpeed, currentTemperature, currentSteps, file.absolutePath)
         } catch (e: RemoteException) {
             e.printStackTrace()
             isExportingState.value = false

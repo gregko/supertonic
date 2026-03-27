@@ -305,7 +305,7 @@ function handleSystemTTS(request) {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "send-to-supertonic",
-    title: "Send to Supertonic TTS",
+    title: "Send to Supertonic Local TTS",
     contexts: ["selection"]
   });
 });

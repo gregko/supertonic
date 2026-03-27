@@ -223,7 +223,7 @@ async function setupMediaSession() {
     } catch (e) {}
 
     navigator.mediaSession.metadata = new MediaMetadata({
-        title: 'Supertonic TTS',
+        title: 'Supertonic Local TTS',
         artist: 'Text to Speech',
         album: 'Ready',
         artwork: [{ src: artworkUrl, sizes: '128x128', type: 'image/png' }]

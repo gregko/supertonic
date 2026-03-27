@@ -12,6 +12,7 @@ data class QueueItem(
     val lang: String,
     val stylePath: String,
     val speed: Float,
+    val temperature: Float = SynthesisPreferences.DEFAULT_TEMPERATURE,
     val steps: Int = 5,
     val startIndex: Int = 0
 )
@@ -96,6 +97,7 @@ object QueueManager {
                 obj.put("lang", item.lang)
                 obj.put("stylePath", item.stylePath)
                 obj.put("speed", item.speed.toDouble())
+                obj.put("temperature", item.temperature.toDouble())
                 obj.put("steps", item.steps)
                 obj.put("startIndex", item.startIndex)
                 jsonArray.put(obj)
@@ -124,6 +126,9 @@ object QueueManager {
                     lang = obj.getString("lang"),
                     stylePath = obj.getString("stylePath"),
                     speed = obj.getDouble("speed").toFloat(),
+                    temperature = SynthesisPreferences.normalizeTemperature(
+                        obj.optDouble("temperature", SynthesisPreferences.DEFAULT_TEMPERATURE.toDouble()).toFloat()
+                    ),
                     steps = obj.optInt("steps", 5),
                     startIndex = obj.optInt("startIndex", 0)
                 ))

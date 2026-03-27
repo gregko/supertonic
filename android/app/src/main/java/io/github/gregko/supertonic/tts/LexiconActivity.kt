@@ -21,6 +21,7 @@ import io.github.gregko.supertonic.tts.ui.LexiconScreen
 import io.github.gregko.supertonic.tts.ui.theme.SupertonicTheme
 import io.github.gregko.supertonic.tts.utils.LexiconItem
 import io.github.gregko.supertonic.tts.utils.LexiconManager
+import io.github.gregko.supertonic.tts.utils.SynthesisPreferences
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.json.JSONArray
 import org.json.JSONObject
@@ -254,6 +255,7 @@ class LexiconActivity : ComponentActivity() {
         val prefs = getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE)
         val selectedLang = prefs.getString("selected_lang", "en") ?: "en"
         val voiceFile = prefs.getString("selected_voice", "M1.json") ?: "M1.json"
+        val temperature = SynthesisPreferences.getTemperature(prefs)
 
         val stylePath = io.github.gregko.supertonic.tts.utils.AssetInstaller
             .resolveStyleFile(this, voiceFile, selectedLang)
@@ -272,7 +274,7 @@ class LexiconActivity : ComponentActivity() {
         Toast.makeText(this, testMsg, Toast.LENGTH_SHORT).show()
 
         try {
-            playbackService?.synthesizeAndPlay(finalText, selectedLang, stylePath, 1.0f, testSteps, 0)
+            playbackService?.synthesizeAndPlay(finalText, selectedLang, stylePath, 1.0f, temperature, testSteps, 0)
         } catch (e: RemoteException) {
             e.printStackTrace()
         }

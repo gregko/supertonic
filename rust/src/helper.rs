@@ -16,7 +16,19 @@ use regex::Regex;
 
 // Available languages for multilingual TTS
 pub const AVAILABLE_LANGS: &[&str] = &["en", "ko", "es", "pt", "fr"];
-const LATENT_TEMPERATURE: f32 = 0.60;
+pub const DEFAULT_LATENT_TEMPERATURE: f32 = 0.60;
+pub const MIN_LATENT_TEMPERATURE: f32 = 0.40;
+pub const MAX_LATENT_TEMPERATURE: f32 = 1.00;
+
+fn normalize_temperature(temperature: f32) -> f32 {
+    if !temperature.is_finite() {
+        DEFAULT_LATENT_TEMPERATURE
+    } else {
+        temperature
+            .max(MIN_LATENT_TEMPERATURE)
+            .min(MAX_LATENT_TEMPERATURE)
+    }
+}
 
 pub fn is_valid_lang(lang: &str) -> bool {
     AVAILABLE_LANGS.contains(&lang)
@@ -246,6 +258,7 @@ pub fn sample_noisy_latent(
     base_chunk_size: i32,
     chunk_compress: i32,
     latent_dim: i32,
+    temperature: f32,
 ) -> (Array3<f32>, Array3<f32>) {
     let bsz = duration.len();
     let max_dur = duration.iter().fold(0.0f32, |a, &b| a.max(b));
@@ -264,7 +277,7 @@ pub fn sample_noisy_latent(
 
     // Lower temperature improves stability and reduces skipped words/hallucinations.
     // Keep this conservative to avoid making speech too flat or muffled.
-    let normal = Normal::new(0.0, LATENT_TEMPERATURE).unwrap();
+    let normal = Normal::new(0.0, normalize_temperature(temperature)).unwrap();
     let mut rng = rand::thread_rng();
 
     for b in 0..bsz {
@@ -586,6 +599,7 @@ impl TextToSpeech {
         style: &Style,
         total_step: usize,
         speed: f32,
+        temperature: f32,
     ) -> Result<(Vec<f32>, Vec<f32>)> {
         let bsz = text_list.len();
 
@@ -642,6 +656,7 @@ impl TextToSpeech {
             self.cfgs.ae.base_chunk_size,
             self.cfgs.ttl.chunk_compress_factor,
             self.cfgs.ttl.latent_dim,
+            temperature,
         );
 
         // Prepare constant arrays
@@ -695,6 +710,7 @@ impl TextToSpeech {
         style: &Style,
         total_step: usize,
         speed: f32,
+        temperature: f32,
         silence_duration: f32,
         mut callback: F,
     ) -> Result<(Vec<f32>, f32)> 
@@ -712,7 +728,14 @@ impl TextToSpeech {
                 return Err(anyhow::anyhow!("Synthesis cancelled by user"));
             }
             
-            let (wav, duration) = self._infer(&[chunk.clone()], &[lang.to_string()], style, total_step, speed)?;
+            let (wav, duration) = self._infer(
+                &[chunk.clone()],
+                &[lang.to_string()],
+                style,
+                total_step,
+                speed,
+                temperature
+            )?;
 
             // Truncate audio based on predicted duration to remove trailing silence
             let dur = duration[0];
@@ -753,8 +776,9 @@ impl TextToSpeech {
         style: &Style,
         total_step: usize,
         speed: f32,
+        temperature: f32,
     ) -> Result<(Vec<f32>, Vec<f32>)> {
-        self._infer(text_list, lang_list, style, total_step, speed)
+        self._infer(text_list, lang_list, style, total_step, speed, temperature)
     }
 }
 

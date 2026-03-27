@@ -3,13 +3,13 @@ package io.github.gregko.supertonic.tts.service;
 import io.github.gregko.supertonic.tts.service.IPlaybackListener;
 
 interface IPlaybackService {
-    oneway void synthesizeAndPlay(String text, String lang, String stylePath, float speed, int steps, int startIndex);
-    oneway void addToQueue(String text, String lang, String stylePath, float speed, int steps, int startIndex);
+    oneway void synthesizeAndPlay(String text, String lang, String stylePath, float speed, float temperature, int steps, int startIndex);
+    oneway void addToQueue(String text, String lang, String stylePath, float speed, float temperature, int steps, int startIndex);
     oneway void play();
     oneway void pause();
     oneway void stop();
     boolean isServiceActive();
     oneway void setListener(IPlaybackListener listener);
-    oneway void exportAudio(String text, String lang, String stylePath, float speed, int steps, String outputPath);
+    oneway void exportAudio(String text, String lang, String stylePath, float speed, float temperature, int steps, String outputPath);
     int getCurrentIndex();
 }

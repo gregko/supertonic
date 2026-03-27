@@ -1,0 +1,9 @@
+Use the following commands to build the release version of the app:
+
+cd C:\GitHub\supertonic\android
+
+To build APK:
+.\gradlew.bat assembleRelease
+
+To build AAB: don't use for now, AAB must be signed with a different key
+.\gradlew.bat bundleRelease

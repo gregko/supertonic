@@ -37,12 +37,12 @@ import java.nio.ByteOrder
 class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.OnAudioFocusChangeListener {
 
     private val binder = object : IPlaybackService.Stub() {
-        override fun synthesizeAndPlay(text: String, lang: String, stylePath: String, speed: Float, steps: Int, startIndex: Int) {
-            this@PlaybackService.synthesizeAndPlay(text, lang, stylePath, speed, steps, startIndex)
+        override fun synthesizeAndPlay(text: String, lang: String, stylePath: String, speed: Float, temperature: Float, steps: Int, startIndex: Int) {
+            this@PlaybackService.synthesizeAndPlay(text, lang, stylePath, speed, temperature, steps, startIndex)
         }
 
-        override fun addToQueue(text: String, lang: String, stylePath: String, speed: Float, steps: Int, startIndex: Int) {
-            this@PlaybackService.addToQueue(text, lang, stylePath, speed, steps, startIndex)
+        override fun addToQueue(text: String, lang: String, stylePath: String, speed: Float, temperature: Float, steps: Int, startIndex: Int) {
+            this@PlaybackService.addToQueue(text, lang, stylePath, speed, temperature, steps, startIndex)
         }
 
         override fun play() {
@@ -65,8 +65,8 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
             this@PlaybackService.setListener(listener)
         }
 
-        override fun exportAudio(text: String, lang: String, stylePath: String, speed: Float, steps: Int, outputPath: String) {
-            this@PlaybackService.exportAudio(text, lang, stylePath, speed, steps, File(outputPath))
+        override fun exportAudio(text: String, lang: String, stylePath: String, speed: Float, temperature: Float, steps: Int, outputPath: String) {
+            this@PlaybackService.exportAudio(text, lang, stylePath, speed, temperature, steps, File(outputPath))
         }
 
         override fun getCurrentIndex(): Int {
@@ -216,13 +216,14 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
         return isPlaying || isSynthesizing || audioTrack != null
     }
 
-    fun addToQueue(text: String, lang: String, stylePath: String, speed: Float, steps: Int, startIndex: Int) {
+    fun addToQueue(text: String, lang: String, stylePath: String, speed: Float, temperature: Float, steps: Int, startIndex: Int) {
         val normalizedStylePath = AssetInstaller.normalizeStylePath(this, stylePath, lang)
         QueueManager.add(QueueItem(
             text = text,
             lang = lang,
             stylePath = normalizedStylePath,
             speed = speed,
+            temperature = temperature,
             steps = steps,
             startIndex = startIndex
         ))
@@ -230,7 +231,7 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
 
     private var synthesisJob: Job? = null
 
-    fun synthesizeAndPlay(text: String, lang: String, stylePath: String, speed: Float, steps: Int, startIndex: Int = 0) {
+    fun synthesizeAndPlay(text: String, lang: String, stylePath: String, speed: Float, temperature: Float, steps: Int, startIndex: Int = 0) {
         serviceScope.launch {
             if (!ensureEngineReady(lang)) {
                 Log.e(TAG, "Cannot synthesize because the model assets are unavailable for language=$lang")
@@ -280,7 +281,7 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
                         val sentenceLang = lang // Strict enforcement as per requirement
                         val normalizedText = textNormalizer.normalize(sentence, sentenceLang)
 
-                        val audioData = SupertonicTTS.generateAudio(normalizedText, sentenceLang, normalizedStylePath, speed, 0.0f, steps, null)
+                        val audioData = SupertonicTTS.generateAudio(normalizedText, sentenceLang, normalizedStylePath, speed, 0.0f, steps, temperature, null)
                         
                         if (audioData != null && audioData.isNotEmpty()) {
                             val boostedData = applyVolumeBoost(audioData, VOLUME_BOOST_FACTOR)
@@ -313,7 +314,15 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
                         val nextItem = QueueManager.next()
                         if (nextItem != null) {
                             SupertonicTTS.reset() // Explicit JNI Handshake
-                            synthesizeAndPlay(nextItem.text, nextItem.lang, nextItem.stylePath, nextItem.speed, nextItem.steps, nextItem.startIndex)
+                            synthesizeAndPlay(
+                                nextItem.text,
+                                nextItem.lang,
+                                nextItem.stylePath,
+                                nextItem.speed,
+                                nextItem.temperature,
+                                nextItem.steps,
+                                nextItem.startIndex
+                            )
                         } else {
                             stopPlayback()
                         }
@@ -472,7 +481,7 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
         }
     }
 
-    fun exportAudio(text: String, lang: String, stylePath: String, speed: Float, steps: Int, outputFile: File) {
+    fun exportAudio(text: String, lang: String, stylePath: String, speed: Float, temperature: Float, steps: Int, outputFile: File) {
         serviceScope.launch {
             if (!ensureEngineReady(lang)) {
                 try { listener?.onExportComplete(false, outputFile.absolutePath) } catch(e: RemoteException){}
@@ -498,7 +507,7 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
                         // val sentenceLang = LanguageDetector.detect(sentence, lang)
                         val sentenceLang = lang
                         val normalizedText = textNormalizer.normalize(sentence, sentenceLang)
-                        val audioData = SupertonicTTS.generateAudio(normalizedText, sentenceLang, normalizedStylePath, speed, 0.0f, steps, null)
+                        val audioData = SupertonicTTS.generateAudio(normalizedText, sentenceLang, normalizedStylePath, speed, 0.0f, steps, temperature, null)
                         if (audioData != null) {
                             outputStream.write(applyVolumeBoost(audioData, VOLUME_BOOST_FACTOR))
                         }
@@ -548,7 +557,7 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
         val activityIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0, activityIntent, PendingIntent.FLAG_IMMUTABLE)
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Supertonic TTS")
+            .setContentTitle(getString(R.string.app_name))
             .setContentText(status)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
