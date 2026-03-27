@@ -19,8 +19,7 @@ struct SupertonicEngine {
     last_rtf: f32,
 }
 
-#[no_mangle]
-pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_init(
+fn supertonic_tts_init(
     mut env: JNIEnv,
     _class: JClass,
     model_path: JString,
@@ -63,8 +62,7 @@ pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_init(
     Box::into_raw(Box::new(engine)) as jlong
 }
 
-#[no_mangle]
-pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_synthesize(
+fn supertonic_tts_synthesize(
     mut env: JNIEnv,
     instance: JObject,
     ptr: jlong,
@@ -180,8 +178,7 @@ pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_synthesiz
     }
 }
 
-#[no_mangle]
-pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_getSocClass(
+fn supertonic_tts_get_soc_class(
     _env: JNIEnv,
     _class: JClass,
     ptr: jlong,
@@ -196,8 +193,7 @@ pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_getSocCla
     }
 }
 
-#[no_mangle]
-pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_getSampleRate(
+fn supertonic_tts_get_sample_rate(
     _env: JNIEnv,
     _class: JClass,
     ptr: jlong,
@@ -207,8 +203,7 @@ pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_getSample
     engine.tts.sample_rate as jint
 }
 
-#[no_mangle]
-pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_reset(
+fn supertonic_tts_reset(
     _env: JNIEnv,
     _class: JClass,
     ptr: jlong,
@@ -221,8 +216,7 @@ pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_reset(
     }
 }
 
-#[no_mangle]
-pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_close(
+fn supertonic_tts_close(
     _env: JNIEnv,
     _class: JClass,
     ptr: jlong,
@@ -232,4 +226,128 @@ pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_close(
             let _ = Box::from_raw(ptr as *mut SupertonicEngine);
         }
     }
+}
+
+// Keep both the old and new Java package exports available so the native
+// library continues to work across the package rename.
+#[no_mangle]
+pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_init(
+    env: JNIEnv,
+    class: JClass,
+    model_path: JString,
+    lib_path: JString,
+) -> jlong {
+    supertonic_tts_init(env, class, model_path, lib_path)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_init(
+    env: JNIEnv,
+    class: JClass,
+    model_path: JString,
+    lib_path: JString,
+) -> jlong {
+    supertonic_tts_init(env, class, model_path, lib_path)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_synthesize(
+    env: JNIEnv,
+    instance: JObject,
+    ptr: jlong,
+    text: JString,
+    lang: JString,
+    style_path: JString,
+    speed: jfloat,
+    buffer_seconds: jfloat,
+    steps: jint,
+) -> jbyteArray {
+    supertonic_tts_synthesize(env, instance, ptr, text, lang, style_path, speed, buffer_seconds, steps)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_synthesize(
+    env: JNIEnv,
+    instance: JObject,
+    ptr: jlong,
+    text: JString,
+    lang: JString,
+    style_path: JString,
+    speed: jfloat,
+    buffer_seconds: jfloat,
+    steps: jint,
+) -> jbyteArray {
+    supertonic_tts_synthesize(env, instance, ptr, text, lang, style_path, speed, buffer_seconds, steps)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_getSocClass(
+    env: JNIEnv,
+    class: JClass,
+    ptr: jlong,
+) -> jint {
+    supertonic_tts_get_soc_class(env, class, ptr)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_getSocClass(
+    env: JNIEnv,
+    class: JClass,
+    ptr: jlong,
+) -> jint {
+    supertonic_tts_get_soc_class(env, class, ptr)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_getSampleRate(
+    env: JNIEnv,
+    class: JClass,
+    ptr: jlong,
+) -> jint {
+    supertonic_tts_get_sample_rate(env, class, ptr)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_getSampleRate(
+    env: JNIEnv,
+    class: JClass,
+    ptr: jlong,
+) -> jint {
+    supertonic_tts_get_sample_rate(env, class, ptr)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_reset(
+    env: JNIEnv,
+    class: JClass,
+    ptr: jlong,
+) {
+    supertonic_tts_reset(env, class, ptr)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_reset(
+    env: JNIEnv,
+    class: JClass,
+    ptr: jlong,
+) {
+    supertonic_tts_reset(env, class, ptr)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_brahmadeo_supertonic_tts_SupertonicTTS_close(
+    env: JNIEnv,
+    class: JClass,
+    ptr: jlong,
+) {
+    supertonic_tts_close(env, class, ptr)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_hyperionics_supertonic_tts_SupertonicTTS_close(
+    env: JNIEnv,
+    class: JClass,
+    ptr: jlong,
+) {
+    supertonic_tts_close(env, class, ptr)
 }
