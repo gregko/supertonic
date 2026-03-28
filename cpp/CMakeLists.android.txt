@@ -1,0 +1,88 @@
+cmake_minimum_required(VERSION 3.18)
+project(supertonic_tts C CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Aggressive optimisation for release builds
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG -ffast-math")
+set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE}   -O3 -DNDEBUG -ffast-math")
+
+# ---------------------------------------------------------------------------
+# ONNX Runtime  (pre-built shared library supplied via ONNX_JNI_ROOT)
+# ---------------------------------------------------------------------------
+# ONNX_JNI_ROOT is expected to point to the directory that contains
+#   <abi>/libonnxruntime.so   and   headers/onnxruntime_cxx_api.h
+# It is forwarded from Gradle via -DONNX_JNI_ROOT=...
+
+if(NOT DEFINED ONNX_JNI_ROOT)
+    message(FATAL_ERROR "ONNX_JNI_ROOT must be set to the ONNX Runtime Android JNI root directory")
+endif()
+
+set(ORT_INCLUDE_DIR "${ONNX_JNI_ROOT}/../headers")
+if(NOT EXISTS "${ORT_INCLUDE_DIR}/onnxruntime_cxx_api.h")
+    # Try alternate layout where headers are a sibling of the jni/ dir
+    set(ORT_INCLUDE_DIR "${ONNX_JNI_ROOT}/../headers")
+    if(NOT EXISTS "${ORT_INCLUDE_DIR}/onnxruntime_cxx_api.h")
+        message(FATAL_ERROR
+            "Cannot find onnxruntime_cxx_api.h. "
+            "Expected at ${ORT_INCLUDE_DIR}/onnxruntime_cxx_api.h")
+    endif()
+endif()
+
+add_library(onnxruntime SHARED IMPORTED)
+set_target_properties(onnxruntime PROPERTIES
+    IMPORTED_LOCATION "${ONNX_JNI_ROOT}/${ANDROID_ABI}/libonnxruntime.so"
+    INTERFACE_INCLUDE_DIRECTORIES "${ORT_INCLUDE_DIR}"
+)
+
+# ---------------------------------------------------------------------------
+# nlohmann/json  (header-only, bundled as a single header)
+# ---------------------------------------------------------------------------
+# We download once at configure time if not already present.
+set(JSON_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/nlohmann/json.hpp")
+if(NOT EXISTS "${JSON_HEADER}")
+    file(DOWNLOAD
+        "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp"
+        "${JSON_HEADER}"
+        STATUS download_status
+        TLS_VERIFY ON)
+    list(GET download_status 0 status_code)
+    if(NOT status_code EQUAL 0)
+        message(FATAL_ERROR
+            "Failed to download nlohmann/json.hpp. "
+            "Please place it manually at ${JSON_HEADER}")
+    endif()
+endif()
+
+# Create an interface target so that #include <nlohmann/json.hpp> works
+add_library(nlohmann_json INTERFACE)
+target_include_directories(nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}")
+
+# ---------------------------------------------------------------------------
+# TTS helper library  (existing C++ engine code)
+# ---------------------------------------------------------------------------
+add_library(tts_helper STATIC
+    helper.cpp
+    helper.h
+)
+target_link_libraries(tts_helper PUBLIC onnxruntime nlohmann_json)
+target_include_directories(tts_helper PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+
+# ---------------------------------------------------------------------------
+# JNI shared library  (libsupertonic_tts.so – replaces the Rust version)
+# ---------------------------------------------------------------------------
+add_library(supertonic_tts SHARED
+    jni_bridge.cpp
+)
+target_link_libraries(supertonic_tts
+    PRIVATE
+        tts_helper
+        onnxruntime
+        nlohmann_json
+        android
+        log
+)
+
+# Ensure 16 KB page-size alignment (required by Android 15+/ARM64 security policy)
+target_link_options(supertonic_tts PRIVATE "-Wl,-z,max-page-size=16384")

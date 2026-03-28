@@ -9,8 +9,8 @@ plugins {
 def configuredNdkVersion = "27.2.12479018"
 def configuredMinSdk = 24
 def defaultAbiFilters = ["arm64-v8a", "x86_64"]
-def appVersionCode = 10204 // major * 10000 + minor * 100 + patch
-def appVersionName = "1.2.4"
+def appVersionCode = 10205 // major * 10000 + minor * 100 + patch
+def appVersionName = "1.2.5"
 def githubRepoUrl = (project.findProperty("supertonicGithubRepoUrl") ?: "https://github.com/gregko/supertonic") as String
 def upstreamRepoUrl = (project.findProperty("supertonicUpstreamRepoUrl") ?: "https://github.com/DevGitPit/supertonic") as String
 def upstreamRepoLabel = (project.findProperty("supertonicUpstreamRepoLabel") ?: "DevGitPit/supertonic") as String
@@ -159,16 +159,14 @@ tasks.register("syncSupertonicAssets", Sync) {
 
 tasks.register("buildSupertonicNativeLibs", Exec) {
     group = "build"
-    description = "Builds the Rust JNI libraries for the configured Android ABIs."
+    description = "Builds the C++ JNI libraries for the configured Android ABIs."
     workingDir repoRootDir
 
     inputs.files(
-        fileTree(dir: new File(repoRootDir, "rust/src")),
-        new File(repoRootDir, "rust/Cargo.toml"),
-        new File(repoRootDir, "rust/Cargo.lock"),
-        new File(repoRootDir, "rust/.cargo/config.toml"),
-        new File(repoRootDir, "compile_jni_libs.ps1"),
-        new File(repoRootDir, "compile_jni_libs.sh")
+        fileTree(dir: new File(repoRootDir, "cpp"), includes: ["*.cpp", "*.h"]),
+        new File(repoRootDir, "cpp/android/CMakeLists.txt"),
+        new File(repoRootDir, "compile_jni_libs_cpp.ps1"),
+        new File(repoRootDir, "compile_jni_libs_cpp.sh")
     )
     inputs.property("abis", configuredAbiFilters.join(','))
     inputs.property("androidSdkRoot", android.sdkDirectory.absolutePath)
@@ -191,7 +189,7 @@ tasks.register("buildSupertonicNativeLibs", Exec) {
 
         if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("windows")) {
             commandLine "powershell.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
-                new File(repoRootDir, "compile_jni_libs.ps1").absolutePath,
+                new File(repoRootDir, "compile_jni_libs_cpp.ps1").absolutePath,
                 "-Abi", abiArg,
                 "-AndroidSdkRoot", sdkDir,
                 "-NdkVersion", configuredNdkVersion,
@@ -203,7 +201,7 @@ tasks.register("buildSupertonicNativeLibs", Exec) {
             environment "NDK_VERSION", configuredNdkVersion
             environment "ONNX_JNI_ROOT", onnxJniRoot
             environment "MIN_SDK", configuredMinSdk.toString()
-            commandLine "bash", new File(repoRootDir, "compile_jni_libs.sh").absolutePath
+            commandLine "bash", new File(repoRootDir, "compile_jni_libs_cpp.sh").absolutePath
         }
     }
 }

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/GitHub/supertonic/android -type f -name *.tflite -o -name *.onnx -o -name *.pt -o -name *.bin -o -name *.pb)",
+      "Bash(find /c/GitHub/supertonic/assets -type f -name *.onnx)",
+      "Bash(dir \"C:\\\\GitHub\\\\supertonic\\\\assets\\\\onnx\" /A:-D)"
+    ]
+  }
+}

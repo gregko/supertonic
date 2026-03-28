@@ -11,6 +11,7 @@ object SupertonicTTS {
 
     init {
         try {
+            System.loadLibrary("c++_shared")
             System.loadLibrary("onnxruntime")
             System.loadLibrary("supertonic_tts")
             nativeLoadError = null

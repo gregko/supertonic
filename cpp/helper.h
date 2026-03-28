@@ -97,16 +97,18 @@ public:
         const Style& style,
         int total_step,
         float speed = 1.05f,
-        float silence_duration = 0.3f
+        float silence_duration = 0.3f,
+        float temperature = 0.667f
     );
-    
+
     SynthesisResult batch(
         Ort::MemoryInfo& memory_info,
         const std::vector<std::string>& text_list,
         const std::vector<std::string>& lang_list,
         const Style& style,
         int total_step,
-        float speed = 1.05f
+        float speed = 1.05f,
+        float temperature = 0.667f
     );
     
     int getSampleRate() const { return sample_rate_; }
@@ -118,7 +120,8 @@ private:
         const std::vector<std::string>& lang_list,
         const Style& style,
         int total_step,
-        float speed = 1.05f
+        float speed = 1.05f,
+        float temperature = 0.667f
     );
     Config cfgs_;
     UnicodeProcessor* text_processor_;
@@ -134,7 +137,8 @@ private:
     void sampleNoisyLatent(
         const std::vector<float>& duration,
         std::vector<std::vector<std::vector<float>>>& noisy_latent,
-        std::vector<std::vector<std::vector<float>>>& latent_mask
+        std::vector<std::vector<std::vector<float>>>& latent_mask,
+        float temperature = 0.667f
     );
 };
 

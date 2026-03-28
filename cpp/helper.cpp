@@ -424,7 +424,8 @@ TextToSpeech::TextToSpeech(
 void TextToSpeech::sampleNoisyLatent(
     const std::vector<float>& duration,
     std::vector<std::vector<std::vector<float>>>& noisy_latent,
-    std::vector<std::vector<std::vector<float>>>& latent_mask
+    std::vector<std::vector<std::vector<float>>>& latent_mask,
+    float temperature
 ) {
     int bsz = duration.size();
     float wav_len_max = *std::max_element(duration.begin(), duration.end()) * sample_rate_;
@@ -449,8 +450,7 @@ void TextToSpeech::sampleNoisyLatent(
         for (int d = 0; d < latent_dim; d++) {
             noisy_latent[b][d].resize(latent_len);
             for (int t = 0; t < latent_len; t++) {
-                // Reduced temperature (0.667) improves stability and reduces word skipping
-                noisy_latent[b][d][t] = dist(gen) * 0.667f;
+                noisy_latent[b][d][t] = dist(gen) * temperature;
             }
         }
     }
@@ -473,7 +473,8 @@ TextToSpeech::SynthesisResult TextToSpeech::_infer(
     const std::vector<std::string>& lang_list,
     const Style& style,
     int total_step,
-    float speed
+    float speed,
+    float temperature
 ) {
     int bsz = text_list.size();
     
@@ -525,11 +526,10 @@ TextToSpeech::SynthesisResult TextToSpeech::_infer(
     
     auto* dur_data = dp_outputs[0].GetTensorMutableData<float>();
     std::vector<float> duration(dur_data, dur_data + bsz);
-    
-    // Apply speed factor to duration and add safety padding
-    // Padding prevents cutoff if the duration predictor underestimates
+
+    // Apply speed factor to duration (matches Rust: dur /= speed, no padding)
     for (auto& dur : duration) {
-        dur = (dur / speed) + 0.3f; 
+        dur /= speed;
     }
     
     // Create new tensors for text encoder (previous ones were moved)
@@ -559,7 +559,7 @@ TextToSpeech::SynthesisResult TextToSpeech::_infer(
     
     // Sample noisy latent
     std::vector<std::vector<std::vector<float>>> xt, latent_mask;
-    sampleNoisyLatent(duration, xt, latent_mask);
+    sampleNoisyLatent(duration, xt, latent_mask, temperature);
     
     std::vector<int64_t> latent_shape = {
         bsz,
@@ -676,11 +676,16 @@ TextToSpeech::SynthesisResult TextToSpeech::_infer(
     auto wav_info = vocoder_outputs[0].GetTensorTypeAndShapeInfo();
     size_t wav_size = wav_info.GetElementCount();
     auto* wav_data = vocoder_outputs[0].GetTensorMutableData<float>();
-    
+
+    // Truncate vocoder output to predicted duration (matches Rust behavior)
     SynthesisResult result;
-    result.wav.assign(wav_data, wav_data + wav_size);
+    for (int i = 0; i < bsz; i++) {
+        size_t sample_count = static_cast<size_t>(duration[i] * sample_rate_);
+        size_t use_count = std::min(sample_count, wav_size);
+        result.wav.assign(wav_data, wav_data + use_count);
+    }
     result.duration = duration;
-    
+
     return result;
 }
 
@@ -691,7 +696,8 @@ TextToSpeech::SynthesisResult TextToSpeech::call(
     const Style& style,
     int total_step,
     float speed,
-    float silence_duration
+    float silence_duration,
+    float temperature
 ) {
     if (style.getTtlShape()[0] != 1) {
         throw std::runtime_error("Single speaker text to speech only supports single style");
@@ -703,7 +709,7 @@ TextToSpeech::SynthesisResult TextToSpeech::call(
     float dur_cat = 0.0f;
     
     for (const auto& chunk : text_list) {
-        auto result = _infer(memory_info, {chunk}, {lang}, style, total_step, speed);
+        auto result = _infer(memory_info, {chunk}, {lang}, style, total_step, speed, temperature);
         
         if (wav_cat.empty()) {
             wav_cat = result.wav;
@@ -730,9 +736,10 @@ TextToSpeech::SynthesisResult TextToSpeech::batch(
     const std::vector<std::string>& lang_list,
     const Style& style,
     int total_step,
-    float speed
+    float speed,
+    float temperature
 ) {
-    return _infer(memory_info, text_list, lang_list, style, total_step, speed);
+    return _infer(memory_info, text_list, lang_list, style, total_step, speed, temperature);
 }
 
 // ============================================================================
