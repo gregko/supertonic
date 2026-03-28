@@ -272,7 +272,12 @@ class MainActivity : ComponentActivity() {
                     onMixAlphaChange = { mixAlphaState.value = it },
 
                     speed = currentSpeedState.value,
-                    onSpeedChange = { currentSpeedState.value = it },
+                    onSpeedChange = {
+                        currentSpeedState.value = it
+                        getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE).edit()
+                            .putFloat("speed", it)
+                            .apply()
+                    },
                     temperature = currentTemperatureState.floatValue,
                     onTemperatureChange = {
                         val normalizedTemperature = SynthesisPreferences.normalizeTemperature(it)
@@ -363,6 +368,7 @@ class MainActivity : ComponentActivity() {
         currentLangState.value = prefs.getString("selected_lang", "en") ?: "en"
         selectedVoiceFileState.value = prefs.getString("selected_voice", "M1.json") ?: "M1.json"
         selectedVoiceFile2State.value = prefs.getString("selected_voice_2", "M2.json") ?: "M2.json"
+        currentSpeedState.value = prefs.getFloat("speed", 1.1f)
     }
 
     private fun saveStringPref(key: String, value: String) {
