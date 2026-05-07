@@ -1,7 +1,7 @@
 param(
-    [string]$OnnxRuntimeVersion = "1.20.0",
+    [string]$OnnxRuntimeVersion = "1.23.1",
     [string]$OnnxJniRoot = (Join-Path $HOME "onnxruntime-android\jni"),
-    [string]$AssetSource = "huggingface.co/Supertone/supertonic-2",
+    [string]$AssetSource = "huggingface.co/Supertone/supertonic-3",
     [string]$OnnxRuntimeSource = "maven:com.microsoft.onnxruntime:onnxruntime-android"
 )
 

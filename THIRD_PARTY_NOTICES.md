@@ -6,9 +6,9 @@ This Android fork redistributes or bundles the following third-party components 
    License: MIT
    Source: https://github.com/supertone-inc/supertonic
 
-2. `Supertonic 2` model assets by Supertone Inc.
+2. `Supertonic 3` model assets by Supertone Inc.
    License: BigScience Open RAIL-M
-   Source: https://huggingface.co/Supertone/supertonic-2
+   Source: https://huggingface.co/Supertone/supertonic-3
 
 3. `ONNX Runtime Android` by Microsoft Corporation
    License: MIT
@@ -24,7 +24,7 @@ The full bundled notice documents shipped in the app are:
 
 - `THIRD_PARTY_NOTICES.md`
 - `files/SUPERTONIC_SOURCE_CODE_LICENSE.txt`
-- `files/SUPERTONIC_2_MODEL_LICENSE.txt`
+- `files/SUPERTONIC_3_MODEL_LICENSE.txt`
 - `files/ONNXRUNTIME_LICENSE.txt`
 - `files/ORT_CRATE_LICENSE_MIT.txt`
 - `files/ORT_CRATE_LICENSE_APACHE_2.0.txt`

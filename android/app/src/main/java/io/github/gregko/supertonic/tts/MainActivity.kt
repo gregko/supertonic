@@ -34,6 +34,7 @@ import io.github.gregko.supertonic.tts.utils.HistoryManager
 import io.github.gregko.supertonic.tts.utils.LexiconManager
 import io.github.gregko.supertonic.tts.utils.QueueManager
 import io.github.gregko.supertonic.tts.utils.SynthesisPreferences
+import io.github.gregko.supertonic.tts.utils.SupportedLanguages
 import kotlinx.coroutines.*
 import java.io.File
 
@@ -61,13 +62,7 @@ class MainActivity : ComponentActivity() {
 
     // Data
     private val voiceFiles = mutableStateMapOf<String, String>()
-    private val languages = mapOf(
-        "English" to "en",
-        "French" to "fr",
-        "Portuguese" to "pt",
-        "Spanish" to "es",
-        "Korean" to "ko"
-    )
+    private val languages = SupportedLanguages.displayNameToCode
 
     private var currentModelVersion = AssetInstaller.preferredModelVersion("en")
 

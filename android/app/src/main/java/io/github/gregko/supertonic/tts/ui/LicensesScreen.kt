@@ -60,9 +60,9 @@ private val licenseDocuments = listOf(
         assetPath = "licenses/files/SUPERTONIC_SOURCE_CODE_LICENSE.txt"
     ),
     LicenseDocument(
-        title = "Supertonic 2 Model Assets",
-        summary = "Model asset license and use restrictions for bundled Supertonic 2 voices and ONNX assets.",
-        assetPath = "licenses/files/SUPERTONIC_2_MODEL_LICENSE.txt"
+        title = "Supertonic 3 Model Assets",
+        summary = "Model asset license and use restrictions for bundled Supertonic 3 voices and ONNX assets.",
+        assetPath = "licenses/files/SUPERTONIC_3_MODEL_LICENSE.txt"
     ),
     LicenseDocument(
         title = "ONNX Runtime Android",

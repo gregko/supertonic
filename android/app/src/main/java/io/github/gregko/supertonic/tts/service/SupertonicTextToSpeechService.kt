@@ -9,6 +9,8 @@ import android.util.Log
 import io.github.gregko.supertonic.tts.SupertonicTTS
 import io.github.gregko.supertonic.tts.utils.AssetInstaller
 import io.github.gregko.supertonic.tts.utils.SynthesisPreferences
+import io.github.gregko.supertonic.tts.utils.SupportedLanguage
+import io.github.gregko.supertonic.tts.utils.SupportedLanguages
 import kotlinx.coroutines.*
 import java.io.File
 import java.nio.ByteBuffer
@@ -35,21 +37,8 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
             VoiceProfile("F4", "F4.json", "Olivia - Crisp, Confident"),
             VoiceProfile("F5", "F5.json", "Emily - Kind, Gentle")
         )
-        private val SUPPORTED_LANGS = listOf(
-            SupportedLanguage("en", Locale.US, "eng", "USA"),
-            SupportedLanguage("es", Locale.forLanguageTag("es-ES"), "spa", "ESP"),
-            SupportedLanguage("pt", Locale.forLanguageTag("pt-PT"), "por", "PRT"),
-            SupportedLanguage("fr", Locale.FRANCE, "fra", "FRA"),
-            SupportedLanguage("ko", Locale.KOREA, "kor", "KOR")
-        )
+        private val SUPPORTED_LANGS = SupportedLanguages.ALL
     }
-
-    private data class SupportedLanguage(
-        val appCode: String,
-        val locale: Locale,
-        val iso3Language: String,
-        val iso3Country: String
-    )
 
     private data class VoiceProfile(
         val code: String,
@@ -89,7 +78,11 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
 
     override fun onIsLanguageAvailable(lang: String?, country: String?, variant: String?): Int {
         val supported = findSupportedLanguage(lang) ?: return TextToSpeech.LANG_NOT_SUPPORTED
-        return if (!country.isNullOrEmpty() && country.equals(supported.iso3Country, ignoreCase = true)) {
+        return if (
+            !country.isNullOrEmpty() &&
+            (country.equals(supported.iso3Country, ignoreCase = true) ||
+                country.equals(supported.locale.country, ignoreCase = true))
+        ) {
             TextToSpeech.LANG_COUNTRY_AVAILABLE
         } else {
             TextToSpeech.LANG_AVAILABLE
@@ -164,21 +157,7 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
     }
 
     private fun normalizeLanguage(lang: String?): String {
-        if (lang == null) return "en"
-        val l = lang.lowercase(Locale.ROOT)
-        return when {
-            l.startsWith("en") -> "en"
-            l.startsWith("ko") -> "ko"
-            l.startsWith("kor") -> "ko"
-            l.startsWith("es") -> "es"
-            l.startsWith("spa") -> "es"
-            l.startsWith("pt") -> "pt"
-            l.startsWith("por") -> "pt"
-            l.startsWith("fr") -> "fr"
-            l.startsWith("fra") -> "fr"
-            l.startsWith("fre") -> "fr"
-            else -> "en"
-        }
+        return SupportedLanguages.normalizeOrDefault(lang)
     }
 
     private val textNormalizer = io.github.gregko.supertonic.tts.utils.TextNormalizer()
@@ -273,8 +252,7 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
     }
 
     private fun findSupportedLanguage(lang: String?): SupportedLanguage? {
-        val normalized = normalizeLanguage(lang)
-        return SUPPORTED_LANGS.firstOrNull { it.appCode == normalized }
+        return SupportedLanguages.find(lang)
     }
 
     private fun parseVoiceRequest(voiceName: String?): Pair<SupportedLanguage, String>? {

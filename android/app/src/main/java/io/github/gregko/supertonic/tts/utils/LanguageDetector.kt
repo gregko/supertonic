@@ -1,15 +1,23 @@
 package io.github.gregko.supertonic.tts.utils
 
-import java.util.Locale
-
 object LanguageDetector {
     /**
      * Detects the language of a single sentence or text fragment.
-     * Matches Chrome Extension regex exactly.
      */
     fun detect(text: String, hint: String = "en"): String {
         // 1. Korean: Hangul Jamo (3131-314E), Vowels (314F-3163), Syllables (AC00-D7A3)
         if (Regex("[ㄱ-ㅎㅏ-ㅣ가-힣]").containsMatchIn(text)) return "ko"
+
+        // Scripts that map cleanly to a single Supertonic 3 language.
+        if (Regex("[\\u3040-\\u30ff\\u31f0-\\u31ff]").containsMatchIn(text)) return "ja"
+        if (Regex("[\\u0600-\\u06ff]").containsMatchIn(text)) return "ar"
+        if (Regex("[\\u0900-\\u097f]").containsMatchIn(text)) return "hi"
+        if (Regex("[\\u0370-\\u03ff]").containsMatchIn(text)) return "el"
+        if (Regex("[іїєґІЇЄҐ]").containsMatchIn(text)) return "uk"
+        if (Regex("[\\u0400-\\u04ff]").containsMatchIn(text)) {
+            val normalizedHint = SupportedLanguages.normalizeOrDefault(hint)
+            return if (normalizedHint in listOf("bg", "ru", "uk")) normalizedHint else "ru"
+        }
         
         // 2. Strong Unique Indicators
         // Portuguese: ã, õ
@@ -55,22 +63,26 @@ object LanguageDetector {
             
             if (Regex("[àâô]", RegexOption.IGNORE_CASE).containsMatchIn(text)) return "fr"
             
-            if (hint in listOf("es", "pt", "fr")) return hint
+            val accentHint = SupportedLanguages.normalizeOrDefault(hint)
+            if (accentHint in listOf("es", "pt", "fr")) return accentHint
             return "es"
         }
         
         // 5. English check (ASCII)
         val isRoman = text.all { it.code < 128 || it in ".,!?;:\"'()[]{}«»—– " }
         if (isRoman) {
-            return if (hint != "ko" && isValidSupertonicLang(hint)) hint else "en"
+            return if (SupportedLanguages.isSupported(hint)) {
+                SupportedLanguages.normalizeOrDefault(hint)
+            } else {
+                "en"
+            }
         }
         
         // 6. Fallback
-        return if (isValidSupertonicLang(hint)) hint else "en"
-    }
-
-    private fun isValidSupertonicLang(lang: String): Boolean {
-        val l = lang.lowercase(Locale.ROOT)
-        return l in listOf("en", "ko", "es", "pt", "fr")
+        return if (SupportedLanguages.isSupported(hint)) {
+            SupportedLanguages.normalizeOrDefault(hint)
+        } else {
+            "en"
+        }
     }
 }

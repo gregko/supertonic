@@ -2,6 +2,7 @@ package io.github.gregko.supertonic.tts
 
 import android.util.Log
 import io.github.gregko.supertonic.tts.utils.SynthesisPreferences
+import java.text.Normalizer
 
 object SupertonicTTS {
     private var nativePtr: Long = 0
@@ -143,7 +144,7 @@ object SupertonicTTS {
         try {
             val data = synthesize(
                 nativePtr,
-                text,
+                Normalizer.normalize(text, Normalizer.Form.NFKD),
                 lang,
                 stylePath,
                 speed,

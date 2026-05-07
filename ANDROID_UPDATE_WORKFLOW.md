@@ -90,7 +90,7 @@ Then import it into this repo:
 
 ```powershell
 cd C:\GitHub\supertonic
-.\tools\Import-SupertonicAssets.ps1 -SourceRoot C:\path\to\supertonic-2
+.\tools\Import-SupertonicAssets.ps1 -SourceRoot C:\path\to\supertonic-3
 ```
 
 What this script does:
@@ -109,7 +109,7 @@ Evaluate the candidate build:
 If the candidate is good, promote it into the lock file:
 
 ```powershell
-.\tools\Update-AndroidInputsLock.ps1 -AssetSource "huggingface.co/Supertone/supertonic-2@<commit-or-tag>"
+.\tools\Update-AndroidInputsLock.ps1 -AssetSource "huggingface.co/Supertone/supertonic-3@<commit-or-tag>"
 ```
 
 ## Update Type 3: ONNX Runtime Android
@@ -118,7 +118,7 @@ Download and stage a specific version:
 
 ```powershell
 cd C:\GitHub\supertonic
-.\tools\Update-OnnxRuntimeAndroid.ps1 -Version 1.20.0
+.\tools\Update-OnnxRuntimeAndroid.ps1 -Version 1.23.1
 ```
 
 What this script does:
@@ -138,7 +138,7 @@ Evaluate the candidate build:
 If the candidate is good, promote it into the lock file:
 
 ```powershell
-.\tools\Update-AndroidInputsLock.ps1 -OnnxRuntimeVersion 1.20.0
+.\tools\Update-AndroidInputsLock.ps1 -OnnxRuntimeVersion 1.23.1
 ```
 
 ## Recommended Full Upgrade Sequence
@@ -160,7 +160,7 @@ For a model or runtime upgrade, use this exact order:
 or
 
 ```powershell
-.\tools\Update-OnnxRuntimeAndroid.ps1 -Version 1.20.0
+.\tools\Update-OnnxRuntimeAndroid.ps1 -Version 1.23.1
 ```
 
 3. Build and test the candidate without changing the lock yet

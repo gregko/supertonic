@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "1.20.0",
+    [string]$Version = "1.23.1",
     [string]$InstallRoot = (Join-Path $HOME "onnxruntime-android"),
     [switch]$UpdateLock
 )
@@ -26,7 +26,7 @@ if (Test-Path $stagingRoot) {
 
 Expand-Archive -Path $zipPath -DestinationPath $stagingRoot -Force
 
-foreach ($abi in Get-DefaultAbiFilters) {
+foreach ($abi in (Get-DefaultAbiFilters)) {
     $requiredLib = Join-Path $stagingRoot "jni\$abi\libonnxruntime.so"
     if (-not (Test-Path $requiredLib)) {
         throw "Downloaded package is missing $requiredLib"

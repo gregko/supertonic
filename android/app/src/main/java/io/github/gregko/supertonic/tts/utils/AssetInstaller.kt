@@ -14,7 +14,7 @@ data class PreparedModel(
 
 object AssetInstaller {
     private const val TAG = "AssetInstaller"
-    private const val MODEL_VERSION = "v2"
+    private const val MODEL_VERSION = "v3"
     private val installLock = Any()
 
     fun preferredModelVersion(language: String): String = MODEL_VERSION

@@ -4,7 +4,7 @@ $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $script:LockPath = Join-Path $PSScriptRoot "android-inputs.lock.json"
 $script:DefaultOnnxInstallRoot = Join-Path $HOME "onnxruntime-android"
 $script:DefaultOnnxJniRoot = Join-Path $script:DefaultOnnxInstallRoot "jni"
-$script:DefaultOnnxRuntimeVersion = "1.20.0"
+$script:DefaultOnnxRuntimeVersion = "1.23.1"
 $script:DefaultAbiFilters = @("arm64-v8a", "x86_64")
 $script:DefaultNdkVersion = "27.2.12479018"
 $script:TrackedAssetFiles = @(
@@ -184,7 +184,7 @@ function New-AndroidInputsLock {
     param(
         [string]$OnnxRuntimeVersion = $script:DefaultOnnxRuntimeVersion,
         [string]$OnnxJniRoot = $script:DefaultOnnxJniRoot,
-        [string]$AssetSource = "huggingface.co/Supertone/supertonic-2",
+        [string]$AssetSource = "huggingface.co/Supertone/supertonic-3",
         [string]$OnnxRuntimeSource = "maven:com.microsoft.onnxruntime:onnxruntime-android"
     )
 
@@ -205,7 +205,7 @@ function New-AndroidInputsLock {
         modelAssets   = [ordered]@{
             source       = $AssetSource
             layout       = "assets/onnx + assets/voice_styles"
-            modelVersion = "v2"
+            modelVersion = "v3"
             files        = $assetFiles
         }
         onnxRuntimeAndroid = [ordered]@{
@@ -355,8 +355,8 @@ function Resolve-AssetSourceLayout {
             voiceStyles = Join-Path $SourceRoot "assets\voice_styles"
         },
         [ordered]@{
-            onnx        = Join-Path $SourceRoot "V2\supertonic-2\onnx"
-            voiceStyles = Join-Path $SourceRoot "V2\supertonic-2\voice_styles"
+            onnx        = Join-Path $SourceRoot "V3\supertonic-3\onnx"
+            voiceStyles = Join-Path $SourceRoot "V3\supertonic-3\voice_styles"
         }
     )
 

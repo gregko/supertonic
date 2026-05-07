@@ -12,7 +12,11 @@
 using json = nlohmann::json;
 
 // Available languages for multilingual TTS
-const std::vector<std::string> AVAILABLE_LANGS = {"en", "ko", "es", "pt", "fr"};
+const std::vector<std::string> AVAILABLE_LANGS = {
+    "en", "ko", "ja", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr",
+    "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk",
+    "sl", "sv", "tr", "uk", "vi"
+};
 
 // Global tensor buffers for memory management
 static std::vector<std::vector<float>> g_tensor_buffers_float;
@@ -190,7 +194,7 @@ std::string UnicodeProcessor::preprocessText(const std::string& text, const std:
         }
     }
     if (!valid_lang) {
-        throw std::runtime_error("Invalid language: " + lang + ". Available: en, ko, es, pt, fr");
+        throw std::runtime_error("Invalid language: " + lang + ". See AVAILABLE_LANGS for supported codes.");
     }
     
     // Wrap text with language tags
@@ -703,7 +707,7 @@ TextToSpeech::SynthesisResult TextToSpeech::call(
         throw std::runtime_error("Single speaker text to speech only supports single style");
     }
     
-    int max_len = (lang == "ko") ? 120 : 300;
+    int max_len = (lang == "ko" || lang == "ja") ? 120 : 300;
     auto text_list = chunkText(text, max_len);
     std::vector<float> wav_cat;
     float dur_cat = 0.0f;

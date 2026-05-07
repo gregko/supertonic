@@ -1,7 +1,7 @@
 # Supertonic — Lightning Fast, On-Device TTS
 
-[![v2 Demo](https://img.shields.io/badge/🤗%20v2-Demo-yellow)](https://huggingface.co/spaces/Supertone/supertonic-2)
-[![v2 Models](https://img.shields.io/badge/🤗%20v2-Models-blue)](https://huggingface.co/Supertone/supertonic-2)
+[![v3 Demo](https://img.shields.io/badge/🤗%20v3-Demo-yellow)](https://huggingface.co/spaces/Supertone/supertonic-3)
+[![v3 Models](https://img.shields.io/badge/🤗%20v3-Models-blue)](https://huggingface.co/Supertone/supertonic-3)
 [![v1 Demo](https://img.shields.io/badge/🤗%20v1%20(old)-Demo-lightgrey)](https://huggingface.co/spaces/Supertone/supertonic#interactive-demo)
 [![v1 Models](https://img.shields.io/badge/🤗%20v1%20(old)-Models-lightgrey)](https://huggingface.co/Supertone/supertonic)
 
@@ -11,7 +11,7 @@
 
 **Supertonic** is a lightning-fast, on-device text-to-speech system designed for **extreme performance** with minimal computational overhead. Powered by ONNX Runtime, it runs entirely on your device—no cloud, no API calls, no privacy concerns.
 
-> **Fork notice:** This repository is the Android-focused fork maintained at `gregko/supertonic`, based on [DevGitPit/supertonic](https://github.com/DevGitPit/supertonic). It adds end-to-end Android builds, bundled `Supertonic 2` assets, a system TTS engine, dual-ABI (`arm64-v8a` + `x86_64`) packaging, 16 KB native alignment validation, and release packaging suited for both phones and WSA.
+> **Fork notice:** This repository is the Android-focused fork maintained at `gregko/supertonic`, based on [DevGitPit/supertonic](https://github.com/DevGitPit/supertonic). It adds end-to-end Android builds, bundled `Supertonic 3` assets, a system TTS engine, dual-ABI (`arm64-v8a` + `x86_64`) packaging, 16 KB native alignment validation, and release packaging suited for both phones and WSA.
 
 ## Fork Note
 
@@ -21,7 +21,7 @@ Compared with `DevGitPit/supertonic`, this fork adds and maintains:
 
 - Android Studio and Gradle builds that also build the Rust JNI libraries automatically
 - dual-ABI Android packaging for `arm64-v8a` and `x86_64`, including WSA-friendly builds
-- bundled `Supertonic 2` model assets with Android-side install/repair logic
+- bundled `Supertonic 3` model assets with Android-side install/repair logic
 - system TTS engine fixes for multilingual voices, friendlier external voice names, and external-app voice selection
 - 16 KB native library alignment checks and APK validation
 - a documented, low-risk Android update workflow in [ANDROID_UPDATE_WORKFLOW.md](ANDROID_UPDATE_WORKFLOW.md)
@@ -30,7 +30,8 @@ If you want the maintained Android app and Android TTS engine work, use this for
 
 ### 📰 Update News
 
-- **2026.01.06** - 🎉 **Supertonic 2** released with multilingual support! Now supports English (`en`), Korean (`ko`), Spanish (`es`), Portuguese (`pt`), and French (`fr`). [Demo](https://huggingface.co/spaces/Supertone/supertonic-2) | [Models](https://huggingface.co/Supertone/supertonic-2)
+- **2026.04.29** - 🎉 **Supertonic 3** released with 31-language support, improved reading accuracy, fewer repeat/skip failures, and v2-compatible public ONNX assets. [Demo](https://huggingface.co/spaces/Supertone/supertonic-3) | [Models](https://huggingface.co/Supertone/supertonic-3)
+- **2026.01.06** - 🎉 **Supertonic 2** released with 5-language support.
 - **2025.12.10** - Added `supertonic` PyPI package! Install via `pip install supertonic`. For details, visit [supertonic-py documentation](https://supertone-inc.github.io/supertonic-py)
 - **2025.12.10** - Added [6 new voice styles](https://huggingface.co/Supertone/supertonic/tree/b10dbaf18b316159be75b34d24f740008fddd381) (M3, M4, M5, F3, F4, F5). See [Voices](https://supertone-inc.github.io/supertonic-py/voices/) for details
 - **2025.12.08** - Optimized ONNX models via [OnnxSlim](https://github.com/inisis/OnnxSlim) now available on [Hugging Face Models](https://huggingface.co/Supertone/supertonic)
@@ -63,7 +64,7 @@ https://github.com/user-attachments/assets/64980e58-ad91-423a-9623-78c2ffc13680
 
 ---
 
-> 🎧 **Try it now**: Experience Supertonic in your browser with our [**Interactive Demo**](https://huggingface.co/spaces/Supertone/supertonic-2), or get started with pre-trained models from [**Hugging Face Hub**](https://huggingface.co/Supertone/supertonic-2)
+> 🎧 **Try it now**: Experience Supertonic in your browser with our [**Interactive Demo**](https://huggingface.co/spaces/Supertone/supertonic-3), or get started with pre-trained models from [**Hugging Face Hub**](https://huggingface.co/Supertone/supertonic-3)
 
 ## Why Supertonic?
 
@@ -123,7 +124,7 @@ Before running the examples, download the ONNX models and preset voices, and pla
 > - Generic: see `https://git-lfs.com` for installers
 
 ```bash
-git clone https://huggingface.co/Supertone/supertonic-2 assets
+git clone https://huggingface.co/Supertone/supertonic-3 assets
 ```
 
 ### Quick Start
@@ -466,7 +467,7 @@ This paper describes the self-purification technique for training flow matching 
 
 This project's sample code is released under the MIT License. - see the [LICENSE](https://github.com/supertone-inc/supertonic?tab=MIT-1-ov-file) for details.
 
-The accompanying model is released under the OpenRAIL-M License. - see the [LICENSE](https://huggingface.co/Supertone/supertonic-2/blob/main/LICENSE) file for details.
+The accompanying model is released under the OpenRAIL-M License. - see the [LICENSE](https://huggingface.co/Supertone/supertonic-3/blob/main/LICENSE) file for details.
 
 This model was trained using PyTorch, which is licensed under the BSD 3-Clause License but is not redistributed with this project. - see the [LICENSE](https://docs.pytorch.org/FBGEMM/general/License.html) for details.
 

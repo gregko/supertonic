@@ -1,114 +1,114 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-27T11:35:08.9604115-04:00",
+  "generatedAt": "2026-05-06T19:44:21.5174100-04:00",
   "repo": {
     "branch": "main",
-    "commit": "04481a738579a840cdc4250dd439fe36525e4efc",
+    "commit": "14bb10ad362edb3111bb413562827007810a89ca",
     "dirty": true
   },
   "modelAssets": {
-    "source": "huggingface.co/Supertone/supertonic-2",
+    "source": "huggingface.co/Supertone/supertonic-3@724fb5abbf5502583fb520898d45929e62f02c0b",
     "layout": "assets/onnx + assets/voice_styles",
-    "modelVersion": "v2",
+    "modelVersion": "v3",
     "files": [
       {
         "path": "assets/onnx/duration_predictor.onnx",
-        "size": 1521526,
-        "sha256": "6D556B3691165C364BE91DC0BD894656B5949F5ACD2750D8EC2F954010845011"
+        "size": 3700147,
+        "sha256": "C3EB91414D5FF8A7A239B7FE9E34E7E2BF8A8140D8375FFB14718B1C639325DB"
       },
       {
         "path": "assets/onnx/text_encoder.onnx",
-        "size": 27431318,
-        "sha256": "DD5F535ED629F7DF86071043E15F541CE1B2AB7F1BDBCE4C7892B307BCA79FA3"
+        "size": 36416150,
+        "sha256": "C7BEFD5EA8C3119769E8A6C1486C4EDC6A3BC8365C67621C881BBB774B9902FF"
       },
       {
         "path": "assets/onnx/tts.json",
-        "size": 9014,
-        "sha256": "4A33CDB42E3432048123B26C46BB6FA637948D54FD4AC3EB36996D94ED6A79E1"
+        "size": 8564,
+        "sha256": "CF1A393B4F46C16D5AF623228566D62658C7EF18BB524549C5AD70C583675121"
       },
       {
         "path": "assets/onnx/unicode_indexer.json",
-        "size": 262196,
-        "sha256": "B7662A73A0703F43B97C0F2E089F8E8325E26F5D841ACA393B5A54C509C92DF1"
+        "size": 277676,
+        "sha256": "9BF7346E43883A81F8645C81224F786D43C5B57F3641F6E7671A7D6C493CB24F"
       },
       {
         "path": "assets/onnx/vector_estimator.onnx",
-        "size": 132471364,
-        "sha256": "105E9D66FD8756876B210A6B4AA03FC393B1EACA3A8DADCC8D9A3BC785C86A35"
+        "size": 256534781,
+        "sha256": "883AC868EA0275EF0E991524DC64F16B3C0376EFD7C320AF6B53F5B780D7C61C"
       },
       {
         "path": "assets/onnx/vocoder.onnx",
-        "size": 101405066,
-        "sha256": "19BD51F47A186069C752403518A40F7EA4C647455056D2511F7249691ECDDF7C"
+        "size": 101424195,
+        "sha256": "085DE76DD8E8D5836D6CA66826601F615939218F90E519F70EE8A36ED2A4C4BA"
       },
       {
         "path": "assets/voice_styles/M1.json",
-        "size": 433585,
-        "sha256": "560A6B1DDAF7917F03A402E4906DBD6BEB2362AC44713FC3505C1B707E3AD43E"
+        "size": 291748,
+        "sha256": "E35604687F5D23694B8E91593A93EEC0E4ECA6C0B02BB8ED69139AB2EA6B0A5B"
       },
       {
         "path": "assets/voice_styles/M2.json",
-        "size": 433360,
-        "sha256": "C316285F66F943BC99DE18559A7C8679F6BD61AFE0364EB13DEA6DB2C9855D2B"
+        "size": 292055,
+        "sha256": "B76CBF62BAC707C710CF0AE5ABA5E31EEA1A6339A9734BFAE33AB98499534A50"
       },
       {
         "path": "assets/voice_styles/M3.json",
-        "size": 433080,
-        "sha256": "C62B13C2BF05AC52E0E95BB036FE39E1C05D3DE15E168A25310CFDBA065AFD51"
+        "size": 290198,
+        "sha256": "EA1AC35CCB91B0D7ECAD533A2FBD0EEC10C91513D8951E3B25FBBA99954E159B"
       },
       {
         "path": "assets/voice_styles/M4.json",
-        "size": 433032,
-        "sha256": "DFCEFB9C8648B6D40E5E50480DE728B3F9B66552274E81C234B76CDF35D2C04F"
+        "size": 291522,
+        "sha256": "CA8EEFAD4FCD989C9379032FF3E50738ADC547EEB5E221B82593A6D7B3BAC303"
       },
       {
         "path": "assets/voice_styles/M5.json",
-        "size": 432694,
-        "sha256": "7E6A23AA9F44EB6E719F8A4BAE7CE0CBD532A889ED8C6261E3F420CC4A7B95BF"
+        "size": 291469,
+        "sha256": "DD22B92740314321F8AE11C5E87F8DD60D060F15DD3A632B5ADF77F471F77AF2"
       },
       {
         "path": "assets/voice_styles/F1.json",
-        "size": 433125,
-        "sha256": "D650875408EFF538F64279E021BC096107740504ED2E27BC07ED08492A763EA9"
+        "size": 292046,
+        "sha256": "BBDEC6EE00231C2C742AD05483DF5334CAB3B52FDA3BA38E6A07059C4563DBC2"
       },
       {
         "path": "assets/voice_styles/F2.json",
-        "size": 433368,
-        "sha256": "2EDEB808FF0744877DC927520A76E7393E6756679E1EF172F303DA0EF6DDF580"
+        "size": 292423,
+        "sha256": "7C722C6A72707B1A77F035D67F0D1351BA187738E06F7683E8C72B1DF3477FC6"
       },
       {
         "path": "assets/voice_styles/F3.json",
-        "size": 432962,
-        "sha256": "0FD3D3F041C6361B1392E286218287025BCAB346C1942603541CD9A6AAE1EC23"
+        "size": 290794,
+        "sha256": "12F6EF2573BAA2DEFA1128069CB59F203E3AB67C92AF77B42DF8A0E3A2F7C6AB"
       },
       {
         "path": "assets/voice_styles/F4.json",
-        "size": 432717,
-        "sha256": "44F14DA16D792A30951A919B9A8EC35056E514E7410B6C2BA87EB7E00C85A18A"
+        "size": 291808,
+        "sha256": "C2FA764C1225A76DFC3E2C73E8AA4F70D9EE48793860EB34C295FFF01C2E032B"
       },
       {
         "path": "assets/voice_styles/F5.json",
-        "size": 432784,
-        "sha256": "4B3F20E6DAF4B5AAA64DEFCF07BF16559CAB247F6F1FB8E0F467920971236924"
+        "size": 291479,
+        "sha256": "45966E73316415626CF41A7D1C6F3B4C70DBC1BA2BEE5C1978EF0CE33244FC8D"
       }
     ]
   },
   "onnxRuntimeAndroid": {
-    "version": "1.20.0",
+    "version": "1.23.1",
     "source": "maven:com.microsoft.onnxruntime:onnxruntime-android",
     "installRoot": "C:\\Users\\greg\\onnxruntime-android",
     "files": [
       {
         "abi": "arm64-v8a",
         "path": "jni/arm64-v8a/libonnxruntime.so",
-        "size": 17571160,
-        "sha256": "52329B7C8E5FCD5C1AA88B01093215FAAEF362E3F3D0E374CB8B10D1E4704677"
+        "size": 19343456,
+        "sha256": "629D677B15742620B008FDEAFAFCF825E6635DE5E650F2728B98CC7C659FBBE5"
       },
       {
         "abi": "x86_64",
         "path": "jni/x86_64/libonnxruntime.so",
-        "size": 20290904,
-        "sha256": "047705AB42981A4884EEC435F60CC1A311E40414CD52FA2F252DA2B473756844"
+        "size": 23176928,
+        "sha256": "6B830967D557BD5ECF90DE8357FFAC3D6EC8A27F70D48D2E954E1809B0612165"
       }
     ]
   },
