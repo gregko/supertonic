@@ -54,6 +54,8 @@ class MainActivity : ComponentActivity() {
     private var currentSpeedState = mutableFloatStateOf(1.1f)
     private var currentStepsState = mutableIntStateOf(5)
     private var currentTemperatureState = mutableFloatStateOf(SynthesisPreferences.DEFAULT_TEMPERATURE)
+    private var currentIntraOpThreadsState =
+        mutableIntStateOf(SynthesisPreferences.DEFAULT_INTRA_OP_THREADS)
 
     // Mini Player State
     private var showMiniPlayerState = mutableStateOf(false)
@@ -169,7 +171,12 @@ class MainActivity : ComponentActivity() {
                 return@launch
             }
 
-            if (SupertonicTTS.initialize(preparedModel.modelPath, preparedModel.libPath)) {
+            if (SupertonicTTS.initialize(
+                    preparedModel.modelPath,
+                    preparedModel.libPath,
+                    currentIntraOpThreadsState.intValue
+                )
+            ) {
                 withContext(Dispatchers.Main) {
                     isInitializingState.value = false
                 }
@@ -286,6 +293,21 @@ class MainActivity : ComponentActivity() {
                         currentStepsState.value = it
                         getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE).edit().putInt("diffusion_steps", it).apply()
                     },
+                    intraOpThreads = currentIntraOpThreadsState.intValue,
+                    onIntraOpThreadsChange = {
+                        val normalized = SynthesisPreferences.normalizeIntraOpThreads(it)
+                        if (currentIntraOpThreadsState.intValue != normalized) {
+                            currentIntraOpThreadsState.intValue = normalized
+                            getSharedPreferences(SynthesisPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+                                .edit()
+                                .putInt(SynthesisPreferences.KEY_INTRA_OP_THREADS, normalized)
+                                .apply()
+                            val resetIntent = Intent(this, PlaybackService::class.java).apply {
+                                action = "RESET_ENGINE"
+                            }
+                            startService(resetIntent)
+                        }
+                    },
 
                     onResetClick = {
                         inputTextState.value = ""
@@ -360,6 +382,7 @@ class MainActivity : ComponentActivity() {
         val prefs = getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE)
         currentStepsState.intValue = prefs.getInt("diffusion_steps", 5)
         currentTemperatureState.floatValue = SynthesisPreferences.getTemperature(prefs)
+        currentIntraOpThreadsState.intValue = SynthesisPreferences.getIntraOpThreads(prefs)
         currentLangState.value = prefs.getString("selected_lang", "en") ?: "en"
         selectedVoiceFileState.value = prefs.getString("selected_voice", "M1.json") ?: "M1.json"
         selectedVoiceFile2State.value = prefs.getString("selected_voice_2", "M2.json") ?: "M2.json"

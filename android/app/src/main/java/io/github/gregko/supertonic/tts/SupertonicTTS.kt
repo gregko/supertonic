@@ -9,6 +9,7 @@ object SupertonicTTS {
     private var nativeLoadError: UnsatisfiedLinkError? = null
     private var loadedModelPath: String? = null
     private var loadedLibPath: String? = null
+    private var loadedIntraOpThreads: Int? = null
 
     init {
         try {
@@ -22,15 +23,31 @@ object SupertonicTTS {
         }
     }
 
-    private external fun init(modelPath: String, libPath: String): Long
+    private external fun init(modelPath: String, libPath: String, intraOpThreads: Int): Long
     private external fun synthesize(ptr: Long, text: String, lang: String, stylePath: String, speed: Float, temperature: Float, bufferSeconds: Float, steps: Int): ByteArray
+    private external fun synthesizeStreaming(
+        ptr: Long,
+        text: String,
+        lang: String,
+        stylePath: String,
+        speed: Float,
+        temperature: Float,
+        bufferSeconds: Float,
+        steps: Int,
+        chunkBytes: Int,
+        gain: Float
+    ): Boolean
     private external fun getSocClass(ptr: Long): Int
     private external fun getSampleRate(ptr: Long): Int
     private external fun close(ptr: Long)
     private external fun reset(ptr: Long)
 
     @Synchronized
-    fun initialize(modelPath: String, libPath: String): Boolean {
+    fun initialize(
+        modelPath: String,
+        libPath: String,
+        intraOpThreads: Int = SynthesisPreferences.DEFAULT_INTRA_OP_THREADS
+    ): Boolean {
         nativeLoadError?.let {
             Log.e(
                 "SupertonicTTS",
@@ -41,7 +58,10 @@ object SupertonicTTS {
         }
 
         if (nativePtr != 0L) {
-            val sameModel = loadedModelPath == modelPath && loadedLibPath == libPath
+            val normalizedThreads = SynthesisPreferences.normalizeIntraOpThreads(intraOpThreads)
+            val sameModel = loadedModelPath == modelPath &&
+                loadedLibPath == libPath &&
+                loadedIntraOpThreads == normalizedThreads
             if (sameModel && getSocClass(nativePtr) != -1) {
                 Log.i("SupertonicTTS", "Engine already initialized and healthy")
                 return true
@@ -51,15 +71,21 @@ object SupertonicTTS {
             release()
         }
         
-        nativePtr = init(modelPath, libPath)
+        val normalizedThreads = SynthesisPreferences.normalizeIntraOpThreads(intraOpThreads)
+        nativePtr = init(modelPath, libPath, normalizedThreads)
         val success = nativePtr != 0L
         if (success) {
             loadedModelPath = modelPath
             loadedLibPath = libPath
-            Log.i("SupertonicTTS", "Engine initialized successfully: $nativePtr")
+            loadedIntraOpThreads = normalizedThreads
+            Log.i(
+                "SupertonicTTS",
+                "Engine initialized successfully: $nativePtr, intraOpThreads=$normalizedThreads"
+            )
         } else {
             loadedModelPath = null
             loadedLibPath = null
+            loadedIntraOpThreads = null
             Log.e("SupertonicTTS", "Engine initialization FAILED")
         }
         return success
@@ -74,7 +100,7 @@ object SupertonicTTS {
 
     interface ProgressListener {
         fun onProgress(sessionId: Long, current: Int, total: Int)
-        fun onAudioChunk(sessionId: Long, data: ByteArray)
+        fun onAudioChunk(sessionId: Long, data: ByteArray): Boolean
     }
 
     fun addProgressListener(listener: ProgressListener) {
@@ -98,15 +124,17 @@ object SupertonicTTS {
     }
 
     // Called from JNI
-    fun notifyAudioChunk(data: ByteArray) {
+    fun notifyAudioChunk(data: ByteArray): Boolean {
         val sid = currentSessionId
         // STRICT ISOLATION: Audio chunks ONLY go to the requester
         if (currentTaskListener != null) {
-            currentTaskListener?.onAudioChunk(sid, data)
+            return currentTaskListener?.onAudioChunk(sid, data) ?: false
         } else {
             // Only if no specific task listener is active (e.g. legacy app call)
             // we send to global listeners
-            for (l in listeners) l.onAudioChunk(sid, data)
+            var accepted = true
+            for (l in listeners) accepted = l.onAudioChunk(sid, data) && accepted
+            return accepted
         }
     }
 
@@ -161,6 +189,52 @@ object SupertonicTTS {
         }
     }
 
+    /**
+     * Streams bounded PCM segments to [listener] on the calling synthesis thread. Unlike
+     * [generateAudio], this path does not create or return a second full-waveform PCM array.
+     */
+    @Synchronized
+    fun streamAudio(
+        text: String,
+        lang: String,
+        stylePath: String,
+        speed: Float = 1.0f,
+        bufferDuration: Float = 0.0f,
+        steps: Int = 5,
+        temperature: Float = SynthesisPreferences.DEFAULT_TEMPERATURE,
+        chunkBytes: Int,
+        gain: Float = 1.0f,
+        listener: ProgressListener
+    ): Boolean {
+        if (nativePtr == 0L) {
+            Log.e("SupertonicTTS", "Engine not initialized")
+            return false
+        }
+
+        currentSessionId++
+        currentTaskListener = listener
+
+        return try {
+            synthesizeStreaming(
+                nativePtr,
+                Normalizer.normalize(text, Normalizer.Form.NFKD),
+                lang,
+                stylePath,
+                speed,
+                SynthesisPreferences.normalizeTemperature(temperature),
+                bufferDuration,
+                steps,
+                chunkBytes,
+                gain
+            )
+        } catch (e: Exception) {
+            Log.e("SupertonicTTS", "Native streaming synthesis exception: ${e.message}")
+            false
+        } finally {
+            currentTaskListener = null
+        }
+    }
+
     @Synchronized
     fun getSoC(): Int {
         if (nativePtr == 0L) return -1
@@ -182,6 +256,7 @@ object SupertonicTTS {
         }
         loadedModelPath = null
         loadedLibPath = null
+        loadedIntraOpThreads = null
     }
 
     @Synchronized

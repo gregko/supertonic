@@ -6,6 +6,7 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.TextToSpeechService
 import android.speech.tts.Voice
 import android.util.Log
+import android.os.SystemClock
 import io.github.gregko.supertonic.tts.SupertonicTTS
 import io.github.gregko.supertonic.tts.utils.AssetInstaller
 import io.github.gregko.supertonic.tts.utils.SynthesisPreferences
@@ -13,18 +14,22 @@ import io.github.gregko.supertonic.tts.utils.SupportedLanguage
 import io.github.gregko.supertonic.tts.utils.SupportedLanguages
 import kotlinx.coroutines.*
 import java.io.File
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicLong
 
 class SupertonicTextToSpeechService : TextToSpeechService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
     private var initJob: Deferred<Boolean>? = null
     private var requestedModelVersion: String? = null
+    private var requestedIntraOpThreads: Int? = null
+    private val transitionGapTracker = TransitionGapTracker()
 
     companion object {
         const val VOLUME_BOOST_FACTOR = 2.5f
+        private const val TAG = "SupertonicTTS"
+        private const val STREAM_CHUNK_BYTES = 4096
+        private val REQUEST_SEQUENCE = AtomicLong(0L)
         private val VOICE_PROFILES = listOf(
             VoiceProfile("M1", "M1.json", "Alex - Lively, Upbeat"),
             VoiceProfile("M2", "M2.json", "James - Deep, Calm"),
@@ -45,23 +50,6 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
         val fileName: String,
         val displayName: String
     )
-
-    private fun applyVolumeBoost(pcmData: ByteArray, gain: Float): ByteArray {
-        if (gain == 1.0f) return pcmData
-        val size = pcmData.size
-        val boosted = ByteArray(size)
-        val inBuffer = ByteBuffer.wrap(pcmData).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
-        val outBuffer = ByteBuffer.wrap(boosted).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
-        val count = size / 2
-        for (i in 0 until count) {
-            val sample = inBuffer.get(i)
-            var scaled = (sample * gain).toInt()
-            if (scaled > 32767) scaled = 32767
-            if (scaled < -32768) scaled = -32768
-            outBuffer.put(i, scaled.toShort())
-        }
-        return boosted
-    }
 
     override fun onCreate() {
         super.onCreate()
@@ -154,6 +142,7 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
 
     override fun onStop() {
         SupertonicTTS.setCancelled(true)
+        transitionGapTracker.reset()
     }
 
     private fun normalizeLanguage(lang: String?): String {
@@ -164,6 +153,8 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
 
     override fun onSynthesizeText(request: SynthesisRequest?, callback: SynthesisCallback?) {
         if (request == null || callback == null) return
+        val requestId = REQUEST_SEQUENCE.incrementAndGet()
+        val requestStartNanos = SystemClock.elapsedRealtimeNanos()
         SupertonicTTS.setCancelled(false)
         val requestedVoice = request.voiceName
         val parsedVoice = parseVoiceRequest(requestedVoice)
@@ -173,26 +164,65 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
                 ensureEngineReady(requestLang)
             } ?: false
         }
+        val engineReadyNanos = SystemClock.elapsedRealtimeNanos()
         if (!engineReady) {
-            Log.e("SupertonicTTS", "Engine initialization timed out for language=$requestLang")
+            Log.e(TAG, "Engine initialization timed out for language=$requestLang")
             callback.error()
             return
         }
 
-        val rawText = request.charSequenceText?.toString() ?: return
+        val rawText = request.charSequenceText?.toString()
+        if (rawText.isNullOrBlank()) {
+            callback.error()
+            return
+        }
         val effectiveSpeed = (request.speechRate / 100.0f).coerceIn(0.5f, 2.5f)
-        callback.start(SupertonicTTS.getAudioSampleRate(), android.media.AudioFormat.ENCODING_PCM_16BIT, 1)
-        
+        val sampleRate = SupertonicTTS.getAudioSampleRate()
+        if (callback.start(
+                sampleRate,
+                android.media.AudioFormat.ENCODING_PCM_16BIT,
+                1
+            ) != TextToSpeech.SUCCESS
+        ) {
+            Log.e(TAG, "Synthesis callback rejected start for request=$requestId")
+            callback.error()
+            return
+        }
+
+        val callbackMaxBytes = callback.maxBufferSize.coerceAtLeast(2)
+        val requestedChunkBytes = minOf(STREAM_CHUNK_BYTES, callbackMaxBytes).let {
+            it - (it % 2)
+        }.coerceAtLeast(2)
+        var firstAudioNanos: Long? = null
+        var estimatedTransitionGapNanos: Long? = null
+        var callbackBackpressureNanos = 0L
+        var totalPcmBytes = 0L
+        var audioChunks = 0
+
         val localListener = object : SupertonicTTS.ProgressListener {
             override fun onProgress(sessionId: Long, current: Int, total: Int) {}
-            override fun onAudioChunk(sessionId: Long, data: ByteArray) {
-                val boostedData = applyVolumeBoost(data, VOLUME_BOOST_FACTOR)
-                var offset = 0
-                while (offset < boostedData.size) {
-                    val length = Math.min(4096, boostedData.size - offset)
-                    callback.audioAvailable(boostedData, offset, length)
-                    offset += length
+            override fun onAudioChunk(sessionId: Long, data: ByteArray): Boolean {
+                val callbackStartNanos = SystemClock.elapsedRealtimeNanos()
+                val status = callback.audioAvailable(data, 0, data.size)
+                val callbackEndNanos = SystemClock.elapsedRealtimeNanos()
+                callbackBackpressureNanos += callbackEndNanos - callbackStartNanos
+
+                if (status == TextToSpeech.SUCCESS) {
+                    if (firstAudioNanos == null) {
+                        firstAudioNanos = callbackStartNanos
+                        estimatedTransitionGapNanos =
+                            transitionGapTracker.gapAtFirstAudioNanos(callbackStartNanos)
+                    }
+                    totalPcmBytes += data.size
+                    audioChunks++
+                    return true
                 }
+
+                Log.e(
+                    TAG,
+                    "audioAvailable failed request=$requestId session=$sessionId status=$status"
+                )
+                return false
             }
         }
 
@@ -205,24 +235,65 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
         val stylePath = resolveStyleFile(requestLang, voiceFile).absolutePath
         val steps = prefs.getInt("diffusion_steps", 5)
         val temperature = SynthesisPreferences.getTemperature(prefs)
+        val intraOpThreads = SynthesisPreferences.getIntraOpThreads(prefs)
 
-        try {
-            val sentences = textNormalizer.splitIntoSentences(rawText)
-            var success = true
-            for (sentence in sentences) {
-                if (SupertonicTTS.isCancelled()) { success = false; break }
-
-                // Granular per-sentence detection
-                // val sentenceLang = LanguageDetector.detect(sentence, requestLang)
-                val sentenceLang = requestLang
-                val normalizedText = textNormalizer.normalize(sentence, sentenceLang)
-
-                SupertonicTTS.generateAudio(normalizedText, sentenceLang, stylePath, effectiveSpeed, 0.0f, steps, temperature, localListener)
+        val sentences = textNormalizer.splitIntoSentences(rawText)
+        var success = sentences.isNotEmpty()
+        for ((sentenceIndex, sentence) in sentences.withIndex()) {
+            if (SupertonicTTS.isCancelled()) {
+                success = false
+                break
             }
-            if (success) callback.done() else callback.error()
-        } finally {
-            // Isolation handled in SupertonicTTS
+
+            // Keep complete sentences as model inputs to preserve sentence-level prosody.
+            val sentenceLang = requestLang
+            val normalizedText = textNormalizer.normalize(sentence, sentenceLang)
+            val sentenceStartNanos = SystemClock.elapsedRealtimeNanos()
+
+            success = SupertonicTTS.streamAudio(
+                normalizedText,
+                sentenceLang,
+                stylePath,
+                effectiveSpeed,
+                0.0f,
+                steps,
+                temperature,
+                requestedChunkBytes,
+                VOLUME_BOOST_FACTOR,
+                localListener
+            )
+            Log.i(
+                TAG,
+                "TTS_METRIC sentence request=$requestId index=$sentenceIndex " +
+                    "success=${if (success) 1 else 0} " +
+                    "elapsed_ms=${formatMillis(SystemClock.elapsedRealtimeNanos() - sentenceStartNanos)}"
+            )
+            if (!success) {
+                break
+            }
         }
+
+        val firstAudio = firstAudioNanos
+        if (firstAudio != null && totalPcmBytes > 0L) {
+            transitionGapTracker.completeRequest(firstAudio, totalPcmBytes, sampleRate)
+        }
+        if (success) callback.done() else callback.error()
+
+        val requestEndNanos = SystemClock.elapsedRealtimeNanos()
+        val timeToFirstAudioNanos = firstAudio?.minus(requestStartNanos)
+        val audioDurationNanos = TransitionGapTracker.pcmDurationNanos(totalPcmBytes, sampleRate)
+        Log.i(
+            TAG,
+            "TTS_METRIC service request=$requestId success=${if (success) 1 else 0} " +
+                "threads=$intraOpThreads steps=$steps sentences=${sentences.size} chunks=$audioChunks " +
+                "chunk_bytes=$requestedChunkBytes pcm_bytes=$totalPcmBytes " +
+                "engine_wait_ms=${formatMillis(engineReadyNanos - requestStartNanos)} " +
+                "time_to_first_audio_ms=${formatOptionalMillis(timeToFirstAudioNanos)} " +
+                "callback_backpressure_ms=${formatMillis(callbackBackpressureNanos)} " +
+                "estimated_transition_gap_ms=${formatOptionalMillis(estimatedTransitionGapNanos)} " +
+                "audio_ms=${formatMillis(audioDurationNanos)} " +
+                "total_ms=${formatMillis(requestEndNanos - requestStartNanos)}"
+        )
     }
 
     private fun getSelectedLang(): String {
@@ -302,6 +373,10 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
 
     private fun startEngineInitialization(lang: String, forceReset: Boolean = false) {
         requestedModelVersion = AssetInstaller.preferredModelVersion(lang)
+        val intraOpThreads = SynthesisPreferences.getIntraOpThreads(
+            getSharedPreferences(SynthesisPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        )
+        requestedIntraOpThreads = intraOpThreads
         initJob?.cancel()
         initJob = serviceScope.async(Dispatchers.IO) {
             val preparedModel = AssetInstaller.prepareModel(this@SupertonicTextToSpeechService, lang)
@@ -314,13 +389,20 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
                 SupertonicTTS.release()
             }
 
-            SupertonicTTS.initialize(preparedModel.modelPath, preparedModel.libPath)
+            SupertonicTTS.initialize(
+                preparedModel.modelPath,
+                preparedModel.libPath,
+                intraOpThreads
+            )
         }
     }
 
     private suspend fun ensureEngineReady(lang: String): Boolean {
         val preferredVersion = AssetInstaller.preferredModelVersion(lang)
-        if (requestedModelVersion != preferredVersion) {
+        val intraOpThreads = SynthesisPreferences.getIntraOpThreads(
+            getSharedPreferences(SynthesisPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        )
+        if (requestedModelVersion != preferredVersion || requestedIntraOpThreads != intraOpThreads) {
             startEngineInitialization(lang)
         }
 
@@ -342,5 +424,13 @@ class SupertonicTextToSpeechService : TextToSpeechService() {
         } catch (_: CancellationException) {
             false
         }
+    }
+
+    private fun formatMillis(nanos: Long): String {
+        return String.format(Locale.ROOT, "%.3f", TransitionGapTracker.nanosToMillis(nanos))
+    }
+
+    private fun formatOptionalMillis(nanos: Long?): String {
+        return nanos?.let(::formatMillis) ?: "na"
     }
 }

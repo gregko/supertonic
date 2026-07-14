@@ -9,8 +9,8 @@ plugins {
 def configuredNdkVersion = "27.2.12479018"
 def configuredMinSdk = 24
 def defaultAbiFilters = ["arm64-v8a", "x86_64"]
-def appVersionCode = 10300 // major * 10000 + minor * 100 + patch
-def appVersionName = "1.3.0"
+def appVersionCode = 10301 // major * 10000 + minor * 100 + patch
+def appVersionName = "1.3.1"
 def githubRepoUrl = (project.findProperty("supertonicGithubRepoUrl") ?: "https://github.com/gregko/supertonic") as String
 def upstreamRepoUrl = (project.findProperty("supertonicUpstreamRepoUrl") ?: "https://github.com/supertone-inc/supertonic") as String
 def upstreamRepoLabel = (project.findProperty("supertonicUpstreamRepoLabel") ?: "supertone-inc/supertonic") as String
@@ -70,6 +70,7 @@ android {
         targetSdk 36
         versionCode appVersionCode
         versionName appVersionName
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "GITHUB_REPO_URL", "\"${githubRepoUrl}\""
         buildConfigField "String", "UPSTREAM_REPO_URL", "\"${upstreamRepoUrl}\""
         buildConfigField "String", "UPSTREAM_REPO_LABEL", "\"${upstreamRepoLabel}\""
@@ -245,4 +246,8 @@ dependencies {
     implementation 'androidx.compose.material:material-icons-extended'
     
     debugImplementation 'androidx.compose.ui:ui-tooling'
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
 }

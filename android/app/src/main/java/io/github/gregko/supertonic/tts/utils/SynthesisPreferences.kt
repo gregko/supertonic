@@ -11,6 +11,10 @@ object SynthesisPreferences {
     const val DEFAULT_TEMPERATURE = 0.60f
     const val MIN_TEMPERATURE = 0.40f
     const val MAX_TEMPERATURE = 1.00f
+    const val KEY_INTRA_OP_THREADS = "onnx_intra_op_threads"
+    const val DEFAULT_INTRA_OP_THREADS = 5
+    const val MIN_INTRA_OP_THREADS = 1
+    const val MAX_INTRA_OP_THREADS = 8
 
     fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -23,5 +27,15 @@ object SynthesisPreferences {
 
     fun getTemperature(prefs: SharedPreferences): Float {
         return normalizeTemperature(prefs.getFloat(KEY_TEMPERATURE, DEFAULT_TEMPERATURE))
+    }
+
+    fun normalizeIntraOpThreads(value: Int): Int {
+        return value.coerceIn(MIN_INTRA_OP_THREADS, MAX_INTRA_OP_THREADS)
+    }
+
+    fun getIntraOpThreads(prefs: SharedPreferences): Int {
+        return normalizeIntraOpThreads(
+            prefs.getInt(KEY_INTRA_OP_THREADS, DEFAULT_INTRA_OP_THREADS)
+        )
     }
 }

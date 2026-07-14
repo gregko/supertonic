@@ -92,6 +92,7 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
     private var wakeLock: android.os.PowerManager.WakeLock? = null
     private var initJob: Deferred<Boolean>? = null
     private var requestedModelVersion: String? = null
+    private var requestedIntraOpThreads: Int? = null
     
     private lateinit var audioManager: AudioManager
     private var focusRequest: AudioFocusRequest? = null
@@ -165,6 +166,9 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
 
     private fun startEngineInitialization(lang: String, forceReset: Boolean = false) {
         requestedModelVersion = AssetInstaller.preferredModelVersion(lang)
+        val intraOpThreads = io.github.gregko.supertonic.tts.utils.SynthesisPreferences
+            .getIntraOpThreads(getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE))
+        requestedIntraOpThreads = intraOpThreads
         initJob?.cancel()
         initJob = serviceScope.async(Dispatchers.IO) {
             val preparedModel = AssetInstaller.prepareModel(this@PlaybackService, lang)
@@ -177,7 +181,11 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
                 SupertonicTTS.release()
             }
 
-            val initialized = SupertonicTTS.initialize(preparedModel.modelPath, preparedModel.libPath)
+            val initialized = SupertonicTTS.initialize(
+                preparedModel.modelPath,
+                preparedModel.libPath,
+                intraOpThreads
+            )
             if (!initialized) {
                 Log.e(TAG, "Engine initialization failed for version=${preparedModel.version}")
             }
@@ -187,7 +195,9 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
 
     private suspend fun ensureEngineReady(lang: String): Boolean {
         val preferredVersion = AssetInstaller.preferredModelVersion(lang)
-        if (requestedModelVersion != preferredVersion) {
+        val intraOpThreads = io.github.gregko.supertonic.tts.utils.SynthesisPreferences
+            .getIntraOpThreads(getSharedPreferences("SupertonicPrefs", Context.MODE_PRIVATE))
+        if (requestedModelVersion != preferredVersion || requestedIntraOpThreads != intraOpThreads) {
             startEngineInitialization(lang)
         }
 
@@ -371,7 +381,7 @@ class PlaybackService : Service(), SupertonicTTS.ProgressListener, AudioManager.
     }
 
     override fun onProgress(sessionId: Long, current: Int, total: Int) {}
-    override fun onAudioChunk(sessionId: Long, data: ByteArray) {}
+    override fun onAudioChunk(sessionId: Long, data: ByteArray): Boolean = true
 
     fun play() {
         resumeOnFocusGain = false

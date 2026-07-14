@@ -57,6 +57,8 @@ fun MainScreen(
     onTemperatureChange: (Float) -> Unit,
     steps: Int,
     onStepsChange: (Int) -> Unit,
+    intraOpThreads: Int,
+    onIntraOpThreadsChange: (Int) -> Unit,
 
     // Menu Actions
     onResetClick: () -> Unit,
@@ -301,15 +303,33 @@ fun MainScreen(
 
                         // Quality
                         Column {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Quality (Steps)", style = MaterialTheme.typography.labelMedium)
-                                Text("$steps steps", style = MaterialTheme.typography.labelLarge)
-                            }
-                            Slider(
-                                value = steps.toFloat(),
-                                onValueChange = { onStepsChange(it.toInt()) },
-                                valueRange = 1f..10f,
-                                steps = 8
+                            DropdownSelector(
+                                label = "Quality (Steps)",
+                                options = (1..10).map { "$it ${if (it == 1) "step" else "steps"}" },
+                                selectedOption = "$steps ${if (steps == 1) "step" else "steps"}",
+                                onOptionSelected = { selected ->
+                                    selected.substringBefore(' ').toIntOrNull()?.let(onStepsChange)
+                                }
+                            )
+                        }
+
+                        Column {
+                            DropdownSelector(
+                                label = "ONNX CPU Threads",
+                                options = (SynthesisPreferences.MIN_INTRA_OP_THREADS..
+                                    SynthesisPreferences.MAX_INTRA_OP_THREADS).map(Int::toString),
+                                selectedOption = intraOpThreads.toString(),
+                                onOptionSelected = {
+                                    onIntraOpThreadsChange(
+                                        it.toIntOrNull()
+                                            ?: SynthesisPreferences.DEFAULT_INTRA_OP_THREADS
+                                    )
+                                }
+                            )
+                            Text(
+                                "Changing this reloads the model. Benchmark before changing the default.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
