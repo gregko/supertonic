@@ -1,6 +1,15 @@
 # Supertonic Local TTS - Release Notes
 
-## Version 1.3: The "Expressive" Update 🎨 (Current)
+## Version 1.3.1: Android TTS Latency Improvements
+
+- Added native inference, PCM conversion, callback-backpressure, and first-audio timing.
+- Cached voice styles and removed redundant full-waveform copies from the Android TTS path.
+- Added same-thread incremental PCM delivery and transition-gap diagnostics.
+- Added configurable ONNX CPU thread counts with on-device benchmarking.
+- Replaced the quality slider with a discrete 1–10 step selector.
+- Kept five diffusion steps as the default to preserve speech quality.
+
+## Version 1.3: The "Expressive" Update 🎨
 
 This major update brings a complete UI overhaul and powerful new audio features.
 

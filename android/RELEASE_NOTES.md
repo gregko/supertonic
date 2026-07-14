@@ -1,5 +1,26 @@
 # Release Notes
 
+## v1.3.1
+
+### Android system TTS latency and fluency
+
+- Split native timing into model inference, PCM conversion, callback backpressure,
+  time-to-first-audio, conventional RTF, and throughput metrics.
+- Cache parsed voice styles between sentences and retain the cache across engine resets.
+- Stream bounded PCM segments directly from JNI on Android's synthesis thread, avoiding
+  redundant full-waveform PCM arrays and Kotlin-side volume-boost copies.
+- Preserve whole-sentence model inputs while incrementally exposing the engine's existing
+  long-text segment boundaries.
+- Add configurable ONNX intra-op thread counts and on-device benchmarks for diffusion
+  steps 2, 3, and 5.
+- Add transition-gap logging and Android framework queue tests.
+- Replace the quality slider with an explicit 1–10 step selector so every integer,
+  including four steps, can be selected reliably.
+
+The quality default remains five diffusion steps. Android system TTS requests are still
+dispatched serially by the platform, so cross-request inference cannot begin until Android
+delivers the next queued request.
+
 ## v1.2.5
 
 Android-focused fork of [DevGitPit/supertonic](https://github.com/DevGitPit/supertonic),
